@@ -39,7 +39,7 @@ Go to **Actions → Exercise 03 - JFrog Deploy → Run workflow → main → Run
 
 User-provided GitHub Actions screenshot shows the `deploy` job succeeded in approximately 28 seconds, and the `Deploy to JFrog Artifactory` step reported `[INFO] BUILD SUCCESS`. The Maven version shown in the log was `1.0.7-ci-44785991685-1`.
 
-This confirms successful execution of the configured deployment workflow. **Independent confirmation in the JFrog artifact browser is still pending.** No token or password values were included in the screenshot or this documentation.
+This confirms successful execution of the configured deployment workflow. **Independent confirmation in the JFrog artifact browser is complete.** The user-provided Artifactory screenshot shows repository path `libs-release-local/com/example/maven-docker-artifactory/1.0.7-ci-44785991685-1/`, with `Deployed By: maven-deployer`, and visible version contents. The screenshot establishes the version folder and artifacts are present; it does not independently verify artifact checksums. No token or password values were included in the screenshot or this documentation.
 
 ## Evidence to capture
 
@@ -47,4 +47,4 @@ This confirms successful execution of the configured deployment workflow. **Inde
 2. CI build job success.
 3. Repository secret **names only**.
 4. Deployment workflow success showing uploaded Maven version.
-5. Artifactory artifact listing for the published version.
+5. Artifactory artifact listing for the published version — verified by screenshot (20 November 2026).
