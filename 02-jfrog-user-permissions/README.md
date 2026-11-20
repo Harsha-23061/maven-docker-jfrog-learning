@@ -27,6 +27,27 @@ JFrog Administration → User Management → Permissions → New Permission:
 
 **Important:** Successful deployment proves the account can deploy to the target repository; it does not by itself prove other repositories or overwrite operations are denied. Effective access may include permissions from groups such as `readers`.
 
+## Password versus access token
+
+When setting up JFrog from scratch, an administrator can create a user with a password if the configured login method requires one. SSO or other identity configurations may not require a separate local password.
+
+| Credential | Typical use | Security considerations |
+| --- | --- | --- |
+| User password | Interactive login where password authentication is enabled | Rotating the password may affect other account sign-ins |
+| User-scoped access token | Maven, scripts, CI/CD and API authentication | Can be issued with an expiration and revoked individually; authorization still depends on the token scope and effective permissions |
+| Legacy API key | Older integrations where supported | Distinct from an access token; prefer supported modern access-token authentication |
+
+Maven's XML element is named `<password>` even when it contains an access token. The XML tag alone does not establish what credential was supplied in Exercise 01; that must be checked separately.
+
+Recommended workflow:
+1. Create a dedicated non-admin automation identity such as `maven-deployer`.
+2. Grant only the necessary repository permissions and review inherited group grants.
+3. Generate a user-scoped, limited-lifetime access token for Maven.
+4. Supply it through `JFROG_TOKEN` and never hardcode it in `pom.xml`, Dockerfiles, scripts, or GitHub.
+5. Rotate/revoke tokens when needed; never paste credentials into logs or screenshots.
+
+A token is a secret and must be protected like a password. The Exercise 02 deployment proves allowed access to `libs-release-local`, not denial of access elsewhere.
+
 ## Local authentication
 
 Use a JFrog access token associated with `maven-deployer`. Keep token values only in secure local storage or temporary environment variables. The untracked `.mvn/settings.xml` uses:
