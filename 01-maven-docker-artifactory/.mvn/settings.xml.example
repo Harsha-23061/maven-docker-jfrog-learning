@@ -1,0 +1,9 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+  <servers>
+    <server>
+      <id>artifactory-release</id>
+      <username>${env.JFROG_USER}</username>
+      <password>${env.JFROG_TOKEN}</password>
+    </server>
+  </servers>
+</settings>
