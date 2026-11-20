@@ -1,25 +1,44 @@
-# Exercise 03 — GitHub Actions Maven CI
+# Exercise 03 — GitHub Actions Maven CI/CD
 
-## Goal
-Build and test the Java 17 Maven application automatically on pushes and pull requests. **No JFrog credentials or deployment are used in this first milestone.**
+## Milestone 1: Maven CI — verified
 
-## Files
-- Workflow: [`.github/workflows/maven-ci.yml`](../.github/workflows/maven-ci.yml)
-- Maven project: [`01-maven-docker-artifactory/`](../01-maven-docker-artifactory/)
+The [Maven CI workflow](../.github/workflows/maven-ci.yml) runs on changes to the Exercise 01 Maven project and can also be started manually. The user verified a successful GitHub Actions build job on 20 November 2026 (workflow run #1, approximately 25 seconds).
 
-## How it works
-1. GitHub Actions checks out the repository.
-2. It installs Temurin JDK 17 and enables Maven dependency caching.
-3. It runs `mvn -B -ntp clean verify` from the exercise 01 project directory.
-4. The job succeeds only if Maven verification succeeds.
+## Milestone 2: Manual JFrog deployment
 
-The workflow runs when project files or the workflow itself change on `main`, on matching pull requests, or when started manually from **Actions → Exercise 03 - Maven CI → Run workflow**.
+The [JFrog Deploy workflow](../.github/workflows/jfrog-deploy.yml) is manually triggered through GitHub Actions. It:
+1. Checks out the GitHub repository.
+2. Sets up Java 17 and Maven dependency caching.
+3. Sets a unique Maven version `1.0.7-ci-<run-id>-<attempt>` to avoid overwriting previously published releases.
+4. Runs `mvn clean verify` without deployment credentials.
+5. Supplies `JFROG_USER` and `JFROG_TOKEN` from GitHub Actions repository secrets only to the deployment step.
+6. Uses the existing Maven settings template to deploy the JAR and POM to `libs-release-local`.
 
-## First verification
-Open the repository's **Actions** tab, select **Exercise 03 - Maven CI**, and inspect the newest run. A green check means the CI build passed. If it fails, inspect the `Build and run tests` step.
+### Repository secrets
 
-## Important notes
-The GitHub sample POM and Java source in Exercise 01 were reconstructed from prior guidance and may not match the exact local IntelliJ project. This CI job verifies what is **committed to GitHub**, not unpushed local changes. The current sample has no automated test cases, so `verify` confirms build lifecycle success but not substantive test coverage.
+In **Settings → Secrets and variables → Actions**, configure:
+- `JFROG_USER`: `maven-deployer`
+- `JFROG_TOKEN`: user-scoped JFrog access token (never record its value)
 
-## Next milestone
-After confirming CI succeeds, add JFrog deployment with GitHub Actions secrets, scoped user permissions, and release safeguards. Never commit a real access token.
+Never place tokens in commits, screenshots, log output or documentation. GitHub Actions secrets are available to workflows with appropriate repository privileges; review who can modify workflows and who can run them.
+
+### Run the deployment
+
+Go to **Actions → Exercise 03 - JFrog Deploy → Run workflow → main → Run workflow**. Inspect the deployment job logs for `BUILD SUCCESS` and the uploaded artifact version. Verify the version in JFrog Artifactory.
+
+### Security / limitations
+
+- Deployment is **manual only**; ordinary pushes run CI but do not publish.
+- The token is scoped to the deployment step, and the workflow does not print its value.
+- This is a learning exercise, not a production release pipeline. Consider GitHub environments with required reviewers, pinned action commit SHAs, token rotation, and artifact provenance before production use.
+- The committed Exercise 01 Java source and POM were reconstructed samples and may differ from the original local IntelliJ project.
+- The Maven sample currently has no automated tests; successful `verify` does not establish functional test coverage.
+- Earlier CI screenshots showed warnings about the v4 checkout/setup-java actions. Updating these dependencies is separate follow-up work.
+
+## Evidence to capture
+
+1. CI workflow success summary.
+2. CI build job success.
+3. Repository secret **names only**.
+4. Deployment workflow success showing uploaded Maven version.
+5. Artifactory artifact listing for the published version.
