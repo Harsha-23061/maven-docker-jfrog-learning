@@ -1,22 +1,23 @@
 # Exercise 01 — Maven + Docker + JFrog Artifactory
 
-Java 17 and Maven project packaged with a multi-stage Dockerfile. The Docker build invokes `mvn clean deploy`, publishing JAR and POM files to the JFrog repository `libs-release-local`.
+Java 17 application built with Maven, packaged in a multi-stage Docker image, and published to `libs-release-local` using `mvn deploy` within Docker.
 
-## Status
+> **Source provenance:** This folder uses the previously prepared release scripts and Dockerfile. The `pom.xml` and `Main.java` are reconstructed examples based on the demonstrated configuration, **not byte-for-byte copies of your IntelliJ project**. Replace them with the original files if needed. Version `1.0.6` is shown to match the earlier successful Docker build, and should not be redeployed if it is already published.
 
-Deployment successfully demonstrated through local Maven and Docker; image `maven-demo:1.0.6` built locally. **The original local `pom.xml` and `src/` have not yet been uploaded here.** Copy those exact files from your IntelliJ project before running these scripts. Do not assume the sample scripts have been re-tested from this repository.
+## Local setup
 
-## Safe setup
+1. Install Java 17, Maven and Docker Desktop.
+2. Copy `.mvn/settings.xml.example` to `.mvn/settings.xml` (the latter is Git-ignored).
+3. Set environment variables `JFROG_USER` and `JFROG_TOKEN` securely; do not commit their values.
+4. Verify `pom.xml` has `artifactory-release` configured under `distributionManagement`.
+5. For a **new, unpublished version**, run `mvn -s .mvn/settings.xml clean deploy`.
+6. Or automate the **next patch version**: PowerShell `./release.ps1`, Bash `bash release.sh`.
+7. Verify the JAR and POM in JFrog and run the Docker image: `docker run --rm maven-demo:VERSION`.
 
-1. Copy `.mvn/settings.xml.example` to `.mvn/settings.xml`.
-2. Set `JFROG_USER` and `JFROG_TOKEN` in your shell. The token should be an access token associated with a JFrog identity authorized to deploy to `libs-release-local`.
-3. The `pom.xml` distribution management server ID must be `artifactory-release`, with URL `https://trialgccoro.jfrog.io/artifactory/libs-release-local`.
-4. Deploy directly: `mvn -s .mvn/settings.xml clean deploy` (use a new, unpublished version).
-5. Deploy using Docker and increment version: `./release.ps1` (PowerShell) or `bash release.sh` (Bash).
-6. Verify artifact publication in JFrog and run image with `docker run --rm maven-demo:VERSION`.
+## Security and caveats
 
-**Caution:** Both release scripts change `pom.xml` before the Docker build. If Docker/deploy fails, the version stays incremented; inspect the repository before rerunning. Docker layer caching may skip the Maven deploy layer, so a production pipeline should separate build and publish steps.
-
-## Security
-
-Never commit actual access tokens or hardcode them in XML or Dockerfiles. This repository ignores `.mvn/settings.xml` and uploads only a safe example containing environment-variable placeholders. Do not publish screenshots containing tokens.
+- Credentials are resolved from environment variables, passed into Docker via BuildKit secrets, and are not stored in the final image.
+- `.mvn/settings.xml`, `target/` and local IDE settings are ignored.
+- Both release scripts increment `pom.xml` **before** building. On failure, inspect the version and published artifacts before retrying.
+- A Docker cache hit can skip the Maven deploy instruction. For production CI/CD, decouple artifact deployment from image build.
+- Scope Artifactory deploy permissions to authorized identities and repositories; see the second exercise.
