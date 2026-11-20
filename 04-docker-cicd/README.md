@@ -84,3 +84,24 @@ docker run --rm trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-447881366
 ```
 
 Record the application output and exit status before declaring Exercise 04 fully complete.
+
+## Final runtime verification — 20 November 2026
+
+The user executed the published image locally:
+
+```powershell
+docker run --rm trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-44788136694-4
+```
+
+The command returned to the PowerShell prompt after printing:
+
+```text
+Hello and welcome!
+i = 1
+i = 2
+i = 3
+i = 4
+i = 5
+```
+
+This verifies that the Java application in the Docker image executes as expected. Exercise 04's manual CI/CD build, registry push, pull, and local runtime checks are complete. GitHub Actions workflow is manually triggered, not automatically published on every push.
