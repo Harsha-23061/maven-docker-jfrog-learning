@@ -40,7 +40,7 @@ The [manual Docker push workflow](../.github/workflows/docker-jfrog-push.yml) bu
 
 To run: **GitHub → Actions → Exercise 04 - Docker JFrog Push → Run workflow** on `main`. After a successful run, verify the image and tag in JFrog Artifactory.
 
-**Status:** Workflow committed; first Docker image push not yet verified.
+**Status (20 November 2026):** User-provided GitHub Actions screenshot confirms `docker-build-push` succeeded in 36 seconds after updating the JFrog token. The earlier runs failed at Docker registry login with `invalid header field value for Authorization`; the successful run indicates the workflow completed, but image presence in JFrog Artifactory has not yet been independently verified. No token values were recorded.
 
 ## Next steps
 
