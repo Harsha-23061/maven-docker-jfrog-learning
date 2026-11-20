@@ -62,3 +62,15 @@ docker pull trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-44788136694-4
 ```
 
 Do not share access tokens in logs or screenshots.
+
+## Local Docker authentication — verified 20 November 2026
+
+The first local `docker pull` returned `Authentication is required`. The user verified `JFROG_USER=maven-deployer` and that `JFROG_TOKEN` was configured in PowerShell (without revealing the token). The following command returned `Login Succeeded`:
+
+```powershell
+$env:JFROG_TOKEN | docker login trialgccoro.jfrog.io --username $env:JFROG_USER --password-stdin
+```
+
+The registry login is a separate credential context from GitHub Actions secrets. For a new PowerShell session, set credentials securely before login. Never paste access tokens into documentation, screenshots, or GitHub commits.
+
+**Troubleshooting captured:** An unauthenticated Docker pull failed with `Authentication is required`; registry login succeeded. Local pull and run remain to be verified.
