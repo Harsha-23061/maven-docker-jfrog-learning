@@ -35,6 +35,12 @@ Go to **Actions → Exercise 03 - JFrog Deploy → Run workflow → main → Run
 - The Maven sample currently has no automated tests; successful `verify` does not establish functional test coverage.
 - Earlier CI screenshots showed warnings about the v4 checkout/setup-java actions. Updating these dependencies is separate follow-up work.
 
+## Verified CD execution — 20 November 2026
+
+User-provided GitHub Actions screenshot shows the `deploy` job succeeded in approximately 28 seconds, and the `Deploy to JFrog Artifactory` step reported `[INFO] BUILD SUCCESS`. The Maven version shown in the log was `1.0.7-ci-44785991685-1`.
+
+This confirms successful execution of the configured deployment workflow. **Independent confirmation in the JFrog artifact browser is still pending.** No token or password values were included in the screenshot or this documentation.
+
 ## Evidence to capture
 
 1. CI workflow success summary.
