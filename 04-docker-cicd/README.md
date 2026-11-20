@@ -50,3 +50,15 @@ To run: **GitHub → Actions → Exercise 04 - Docker JFrog Push → Run workflo
 4. Verify image in JFrog, then pull and run it.
 
 **Security:** Never commit credentials or include tokens in logs or screenshots. Existing Maven permission and Docker permission targets remain separate.
+
+## Verified image in JFrog — 20 November 2026
+
+User-provided Artifactory screenshot confirms the Docker repository `docker-trial` contains image `maven-docker-demo` and tag `ci-44788136694-4`, with associated manifest/digest entries visible. This corresponds to the successful GitHub Actions workflow. Local Docker pull and runtime validation are the remaining steps.
+
+To pull:
+
+```powershell
+docker pull trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-44788136694-4
+```
+
+Do not share access tokens in logs or screenshots.
