@@ -29,6 +29,19 @@ docker run --rm maven-docker-demo:local
 
 The GitHub source is a reconstructed sample of the original IntelliJ project, not necessarily a byte-for-byte copy.
 
+## Docker registry and GitHub Actions publishing
+
+JFrog's Docker setup instructions specify:
+- Registry hostname: `trialgccoro.jfrog.io`
+- Docker local repository: `docker-trial`
+- Image path: `trialgccoro.jfrog.io/docker-trial/<IMAGE>:<TAG>`
+
+The [manual Docker push workflow](../.github/workflows/docker-jfrog-push.yml) builds from `01-maven-docker-artifactory` using the Dockerfile in this exercise, then logs into JFrog using GitHub repository secrets and pushes an image tagged `ci-<run-id>-<attempt>`. The workflow does not use secrets during the image build.
+
+To run: **GitHub → Actions → Exercise 04 - Docker JFrog Push → Run workflow** on `main`. After a successful run, verify the image and tag in JFrog Artifactory.
+
+**Status:** Workflow committed; first Docker image push not yet verified.
+
 ## Next steps
 
 1. Verify Dockerfile contents.
