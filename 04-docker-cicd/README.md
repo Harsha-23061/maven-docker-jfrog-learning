@@ -74,3 +74,13 @@ $env:JFROG_TOKEN | docker login trialgccoro.jfrog.io --username $env:JFROG_USER 
 The registry login is a separate credential context from GitHub Actions secrets. For a new PowerShell session, set credentials securely before login. Never paste access tokens into documentation, screenshots, or GitHub commits.
 
 **Troubleshooting captured:** An unauthenticated Docker pull failed with `Authentication is required`; registry login succeeded. Local pull and run remain to be verified.
+
+## Local pull verification — user reported complete
+
+After successful local Docker login, the user reported that the pull step was done for `trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-44788136694-4`. Full pull command output was not supplied. The next verification is to run the image:
+
+```powershell
+docker run --rm trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-44788136694-4
+```
+
+Record the application output and exit status before declaring Exercise 04 fully complete.
