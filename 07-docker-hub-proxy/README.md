@@ -35,3 +35,14 @@ If authentication is required, reuse the existing configured credentials:
 $env:JFROG_TOKEN | docker login trialgccoro.jfrog.io --username $env:JFROG_USER --password-stdin
 ```
 The virtual repository resolves the image through its members; the remote repository checks its cache and retrieves missing content from Docker Hub. Unlike direct Docker Hub pulls, this provides a centralized access point and shared server-side caching. Use cases include Dockerfile base images, CI agents and Kubernetes workloads. Production deployments should pin approved image digests rather than relying solely on mutable tags. Pull success and server-side cache inspection are pending.
+
+## Troubleshooting — Docker Engine unavailable
+User reported `failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine` and `The system cannot find the file specified`. Registry login returned `Login Succeeded`, but the pull still failed. This indicates an unavailable local Docker engine rather than an established JFrog authorization failure. Docker login can authenticate without the engine; image pulls require it.
+
+```powershell
+Start-Process "$env:ProgramFiles\Docker\Docker\Docker Desktop.exe"
+# Wait until engine is running
+docker info
+docker pull trialgccoro.jfrog.io/docker-virtual/nginx:alpine
+```
+Verify server information in docker info. Do not rotate tokens or change repository permissions based solely on this error. Resolution and pull verification pending.
