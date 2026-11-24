@@ -42,3 +42,22 @@ Why match server and mirror IDs? Maven uses the repository ID to select authenti
 
 ## Where to obtain configuration snippets
 User confirmed saving settings-jfrog.xml. JFrog Artifactory's Set Me Up feature provides repository-specific Maven configuration examples and URLs (UI location varies by version). Maven XML structure is documented at https://maven.apache.org/settings.html and mirror syntax at https://maven.apache.org/guides/mini/guide-mirror-settings.html. The server/mirror ID jfrog-maven is our chosen identifier; environment variable names and wildcard mirror are our customizations. Never commit generated credentials. Set Me Up is also useful for other package types.
+
+## Credential troubleshooting and reuse
+A new PowerShell session showed an empty JFROG_USER and Token configured: False. Existing credentials were restored using the commands below; user confirmed maven-deployer and Token configured: True. Token presence is verified, but server authentication remains to be tested.
+
+```powershell
+$env:JFROG_USER = "maven-deployer"
+$secureToken = Read-Host "Enter existing JFrog access token" -AsSecureString
+$env:JFROG_TOKEN = [System.Net.NetworkCredential]::new("", $secureToken).Password
+Remove-Variable secureToken
+Write-Host "JFrog User: $env:JFROG_USER"
+Write-Host "Token configured: $(-not [string]::IsNullOrEmpty($env:JFROG_TOKEN))"
+```
+Session environment variables are process-scoped and inherited by child processes. The token is masked during input but exists as plaintext in the process environment. Reuse a valid token when its scope permits the required permissions; never commit or print it.
+
+## Build verification command (pending)
+```powershell
+mvn -s "$env:USERPROFILE\.m2\settings-jfrog.xml" "-Dmaven.repo.local=$env:USERPROFILE\.m2\repository-jfrog-test" clean package
+```
+An isolated initially empty local cache forces dependency downloads without deleting the existing Maven cache. Check download URLs for maven-virtual and BUILD SUCCESS. This models a fresh developer or CI build agent.
