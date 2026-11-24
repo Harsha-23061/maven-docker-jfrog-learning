@@ -39,3 +39,6 @@ Run Maven with the new settings and an isolated local Maven cache; inspect downl
 
 ## Interview notes
 Why match server and mirror IDs? Maven uses the repository ID to select authentication. Why use a separate settings file? Avoid disrupting existing working configuration while testing the new resolution path.
+
+## Where to obtain configuration snippets
+User confirmed saving settings-jfrog.xml. JFrog Artifactory's Set Me Up feature provides repository-specific Maven configuration examples and URLs (UI location varies by version). Maven XML structure is documented at https://maven.apache.org/settings.html and mirror syntax at https://maven.apache.org/guides/mini/guide-mirror-settings.html. The server/mirror ID jfrog-maven is our chosen identifier; environment variable names and wildcard mirror are our customizations. Never commit generated credentials. Set Me Up is also useful for other package types.
