@@ -33,3 +33,12 @@ Upload a new generic release file with build metadata:
 jf rt upload "release-notes-1.0.1.txt" "generic-dev-local/releases/1.0.1/" --flat=true --build-name="enterprise-demo-build" --build-number="1" --server-id=jfrog-trial
 ```
 Build name and number are chosen identifiers; CI normally generates unique numbers. Upload collects metadata locally; publication is separate and requires build permissions. Build Info supports traceability, auditing, security scanning and promotion. Avoid collecting secrets. Upload verification pending.
+
+## Step 1 — Actual upload verification (2026-11-24)
+User supplied CLI output at 17:35:49 showing `generic-dev-local/releases/1.0.1/release-notes-1.0.1.txt` uploaded with status success, success count 1, failure count 0. Command included build name enterprise-demo-build and number 1, collecting artifact metadata locally. Publication is not yet verified.
+
+## Step 2 — Publish Build Info (pending)
+```powershell
+jf rt build-publish "enterprise-demo-build" "1" --server-id=jfrog-trial
+```
+Reuse the exact build name and number from upload. Artifact upload stores the file; build-publish sends collected build metadata to Artifactory. Build-specific permissions are distinct from repository deploy permissions. If HTTP 403 occurs, investigate build permission targets for the existing user before modifying access. Actual publication result pending.
