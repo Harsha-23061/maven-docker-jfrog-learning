@@ -1,0 +1,39 @@
+name: Production Access Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-access:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      JFROG_USER: ${{ secrets.JFROG_PROD_USER }}
+      JFROG_TOKEN: ${{ secrets.JFROG_PROD_TOKEN }}
+      JFROG_URL: https://trialgccoro.jfrog.io/artifactory
+    steps:
+      - name: Verify repository read permissions
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          check_access() {
+            local label="$1" path="$2" expected="$3" status
+            status=$(curl --silent --show-error --max-time 30 --output /dev/null --write-out '%{http_code}' --user "$JFROG_USER:$JFROG_TOKEN" "$JFROG_URL/api/storage/$path")
+            echo "$label: HTTP $status"
+            if [[ "$expected" == allowed && "$status" == 200 ]]; then
+              echo "PASS: $label"
+            elif [[ "$expected" == denied && "$status" == 403 ]]; then
+              echo "PASS: $label"
+            else
+              echo "::error::Unexpected access result for $label"
+              return 1
+            fi
+          }
+          check_access "QA artifact read" "generic-qa-local/releases/1.0.0/release-notes.txt" allowed
+          check_access "PROD repository read" "generic-prod-local" allowed
+          check_access "DEV artifact read denied" "generic-dev-local/releases/1.0.0/release-notes.txt" denied
