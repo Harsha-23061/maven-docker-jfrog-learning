@@ -179,3 +179,6 @@ HTTP 200 OK on 2026-11-24, compared with HTTP 403 for deployment user. Returned 
 
 ## Step 43 — Inspect build scan summary
 Use the temporary admin profile to query Xray build summary for enterprise-docker-ci version 45417467925-2 via POST /api/v1/summary/build with JSON build_name and build_number. This is a read-only diagnostic despite POST. Endpoint accessibility and response pending. Do not change permissions or workflow until evidence is reviewed. Revoke temporary token after diagnostics.
+
+## Step 44 — Build summary endpoint unavailable; compare CLI scan
+POST /api/v1/summary/build returned HTTP 404 page not found using temporary administrator credentials. The suggested endpoint was not verified and is unavailable at that URL; this does not establish a missing build. Use `jf build-scan "enterprise-docker-ci" "45417467925-2" --fail=true --server-id=jfrog-admin-diagnostic` to compare policy evaluation against earlier deployment-user scans. Inspect Security Violations and exit code; differences are diagnostic, not proof of a specific permission defect. No workflow or permission changes. Restore High and revoke temporary administrator token after testing. Enforcement remains unresolved.
