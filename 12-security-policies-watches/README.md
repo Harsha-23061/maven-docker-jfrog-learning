@@ -173,3 +173,9 @@ Run `jf config show jfrog-admin-diagnostic`. User output verified the separate p
 
 ## Step 42 — Compare policy API access using administrator credentials
 Run `jf xr curl -i -XGET "/api/v2/policies/enterprise-security-policy" --server-id=jfrog-admin-diagnostic`. Compare with the earlier HTTP 403 from maven-deployer. HTTP 200 permits inspection of policy criteria and actions; HTTP 403 requires further authorization diagnosis; HTTP 404 requires checking endpoint and policy name. Result pending. Do not replace CI credentials with admin token. Revoke temporary token and remove profile after diagnostics.
+
+## Step 42 result — Administrator policy retrieval verified
+HTTP 200 OK on 2026-11-24, compared with HTTP 403 for deployment user. Returned policy enterprise-security-policy, security type, rule block-high-critical priority 1, fail_build=true, fix_version_dependant=false, malicious_package=false, min_severity=Low, assigned watch enterprise-docker-watch. Low is temporary negative-test threshold; restore High after testing. This confirms saved configuration and differential API authorization, not enforcement. Earlier build list showed 45 vulnerabilities and zero violations; root cause remains unresolved.
+
+## Step 43 — Inspect build scan summary
+Use the temporary admin profile to query Xray build summary for enterprise-docker-ci version 45417467925-2 via POST /api/v1/summary/build with JSON build_name and build_number. This is a read-only diagnostic despite POST. Endpoint accessibility and response pending. Do not change permissions or workflow until evidence is reviewed. Revoke temporary token after diagnostics.
