@@ -134,3 +134,6 @@ User confirmed saving the policy. Watch screenshot shows By Resource, one reposi
 
 ## Step 32 — Inspect ignore rules
 User confirmed saving the corrected watch scope. Navigate Platform > Xray > Watches & Policies > Ignore Rules and inspect existing entries for applicable vulnerability exceptions. Do not create or delete rules. Ignore rules can suppress policy violations within their applicable scope. No evidence yet that an ignore rule caused the green build. Negative gate test remains pending; restore High after controlled testing.
+
+## Step 33 — Re-evaluate existing content
+User reports no Ignore Rules. Navigate Platform > Xray > Watches & Policies > Watches > enterprise-docker-watch > three-dot menu > Apply on Existing Content > Last 7 Days > OK. Re-evaluate existing content after policy threshold and watch scope changes. This is a diagnostic, not a confirmed fix. Verify build-specific violations rather than relying on repository-wide counts. Negative gate test remains pending; restore High after controlled testing.
