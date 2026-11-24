@@ -61,3 +61,9 @@ Session environment variables are process-scoped and inherited by child processe
 mvn -s "$env:USERPROFILE\.m2\settings-jfrog.xml" "-Dmaven.repo.local=$env:USERPROFILE\.m2\repository-jfrog-test" clean package
 ```
 An isolated initially empty local cache forces dependency downloads without deleting the existing Maven cache. Check download URLs for maven-virtual and BUILD SUCCESS. This models a fresh developer or CI build agent.
+
+## Successful build verification — 2026-11-24
+User supplied Maven logs showing downloads from https://trialgccoro.jfrog.io/artifactory/maven-virtual/ and BUILD SUCCESS, total time 02:22 min, finished 12:34:31 +05:30. Generated target/maven-docker-artifactory-1.0.7.jar. Example resolved packages: commons-compress 1.28.0, commons-codec 1.19.0, commons-lang3 3.18.0, commons-io 2.21.0, aircompressor 0.27, xz 1.10, zstd-jni 1.5.7-6. Existing token authentication and virtual endpoint resolution succeeded. Server-side cache inspection remains pending.
+
+## Next step — inspect remote cache
+In Artifactory > Artifacts, locate maven-central-remote-cache (or expand the remote repository cache in the UI) and inspect org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar. Maven's local cache is on the client; Artifactory's remote cache is shared on the server. A repeat build with the same client cache does not prove server-side caching. Inspect the actual server cache before declaring this verified.
