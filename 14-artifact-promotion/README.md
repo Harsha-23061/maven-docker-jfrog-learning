@@ -173,3 +173,9 @@ User confirmed creation of production-promoter-qa-read. Effective access remains
 
 ## Step 14.3 — PROD deployment permission
 Create production-promoter-prod-deploy scoped only to generic-prod-local, assign production-promoter Read, Deploy/Cache and Annotate; leave Delete/Overwrite and Manage disabled. Read supports verification, Deploy/Cache supports promotion, Annotate supports release metadata. Preserve existing targets. Intended QA read-only and PROD deployment access must be verified, including inherited permissions. Withholding Delete/Overwrite helps protect existing releases but does not establish complete immutability. Creation pending confirmation. Production promotion remains a lab simulation due to unresolved Phase 12 security enforcement.
+
+## Step 14.3 result
+User confirmed creation of production-promoter-prod-deploy. Effective permissions remain untested.
+
+## Step 14.4 — Dedicated production access token
+Generate a user-scoped access token for production-promoter, description github-production-promotion, expiration seven days if available, Artifactory service if selectable, reference token unchecked. These are lab configuration choices; do not select admin scope. Store securely and never publish the token. Plan to use protected GitHub production environment secrets rather than repository-wide secrets. Token generation and authentication pending verification. Token scope and effective permissions must be tested. Phase 12 security enforcement remains unresolved.
