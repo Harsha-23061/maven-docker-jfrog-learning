@@ -19,3 +19,9 @@ On 2026-11-24 at 15:29:44, CLI reported successful upload of `generic-dev-local/
 jf rt build-publish "enterprise-demo-build" "1" --server-id=jfrog-trial
 ```
 Publish locally collected metadata using the same build identity and server alias. Enterprise pipelines may collect metadata across multiple artifact operations before publishing a common build record. Publication supports traceability and subsequent scanning and promotion. Build publication may require separate build permissions; investigate any authorization failure before changing permissions. Actual publication pending.
+
+## Step 2 result — Build Info authorization failure
+On 2026-11-24 at 15:30:34, build-publish for enterprise-demo-build/1 returned HTTP 403: User is not authorized to access build info. Artifact upload succeeded earlier; build authorization is separate. Standalone flags again caused a PowerShell parser error and are not commands.
+
+## Step 3 — Build permissions (pending)
+As administrator, create permission target build-info-deploy (chosen name), select Builds and scope to enterprise-demo-build, using an exact include pattern if supported. Grant existing maven-deployer Read and Deploy build permissions; leave Delete, Annotate and Manage disabled. UI labels may vary. Do not grant administrator access or rotate tokens merely for this error. Retry the existing build-publish command after permission configuration; no repeat upload needed unless local metadata is missing. HTTP 401 generally indicates authentication failure; 403 indicates access forbidden. This exercise demonstrates separation of artifact and build permissions and least privilege. Resolution pending.
