@@ -128,3 +128,6 @@ Build `enterprise-docker-ci/45411263512-3` completed `jf build-scan` with `--fai
 
 ## Step 30 — Policy rule verification
 Screenshot shows enterprise-security-policy, block-high-critical CVE rule, minimum Low, Generate violation and Fail Build actions, and one assigned watch enterprise-docker-watch. Low is a temporary negative-test threshold, not the intended production baseline. Click Save Policy to ensure persistence. Do not recreate resources. Root cause of missing blocking violations remains unresolved; inspect saved watch scope and evaluation before further workflow changes. Restore High after testing. Phase 12 enforcement remains pending.
+
+## Step 31 — Watch build scope inspection
+User confirmed saving the policy. Watch screenshot shows By Resource, one repository, two included build patterns (enterprise-security-policy and enterprise-docker-ci), and assigned enterprise-security-policy. The first build pattern is unnecessary because it is a policy name. Edit Builds, remove only enterprise-security-policy from included build patterns, retain enterprise-docker-ci, verify exclusions are empty, Save By Pattern, then Save Watch. Retain assigned policy and repository. Extra inclusion is not established as the cause of missing violations. Correction pending user confirmation; negative gate test remains unresolved.
