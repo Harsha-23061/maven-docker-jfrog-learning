@@ -212,3 +212,12 @@ These are direct GitHub job logs, not inferred from the screenshot. Dedicated pr
 
 ## Step 15 — Automated QA-to-PROD lab promotion
 Created [.github/workflows/qa-prod-promotion.yml](../.github/workflows/qa-prod-promotion.yml). Manual trigger on main, protected production environment, dedicated secrets, concurrency group, QA status/environment and pinned verified SHA-256 checks, destination absence check (404 required), server-side REST copy, destination checksum check, metadata update and read-back verification. Custom lab-released status deliberately distinguishes simulation from genuine approval. No new infrastructure. API copy/property update behavior and effective write access are pending runtime verification. Failure after copy may leave a partial promotion requiring inspection; do not blindly rerun or delete. Destination precheck is not atomic; no overwrite permission intended. Xray enforcement remains unresolved. Run workflow, approve lab deployment and provide run URL for direct log inspection.
+
+## Step 15 result — QA-to-PROD lab promotion succeeded
+Direct GitHub connector verification of [run 45440417592](https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45440417592), job 138609672945, concluded success. Job log evidence:
+```
+PASS: QA status and expected checksum
+PASS: PROD checksum matches verified QA artifact
+PASS: Simulated production promotion complete
+```
+The workflow checked QA environment=qa and release.status=validated, pinned known SHA-256, verified destination absence (404), copied artifact using Artifactory server-side REST API, verified PROD checksum, updated PROD environment=prod and release.status=lab-released, and read back the properties. This is a verified lab release only; NOT evidence of Xray security approval, and actual production deployments must fail closed until Phase 12 issue is resolved. No rerun: destination now exists and the workflow intentionally rejects a second copy. Additional follow-up should demonstrate read-only verification, rollback and failure recovery without deleting/redeploying this existing artifact. Separate identity and environment approvals implemented; write/delete restrictions not explicitly negative-tested. 
