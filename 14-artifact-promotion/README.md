@@ -149,3 +149,9 @@ User screenshot shows Production Approval Test #1 manually triggered from main a
 
 ## Step 13 — Approve isolated test deployment
 Click Review deployments, select production, optionally enter comment 'Approved for enterprise promotion learning exercise.', then Approve and deploy. Expected production job success with log 'Production approval gate passed'. Actual result pending. No artifact promotion or JFrog credentials involved. Single-user approval is a lab demonstration, not independent release authorization. Phase 12 security limitation remains unresolved.
+
+## Step 13 result
+User confirmed workflow turned green after approval. Waiting state was screenshot-verified earlier; final success is user-confirmed, not independently inspected. Branch rejection and bypass behavior remain untested.
+
+## Step 14.1 — Dedicated production promotion identity
+Create non-admin JFrog user production-promoter under Administration > User Management > Users. Use a controlled email if required and a strong unique password; never publish credentials. No additional repository permissions yet. Keep existing maven-deployer DEV/QA scope unchanged. Plan narrowly scoped QA read and PROD deployment permissions and protected GitHub environment credentials in subsequent steps. Dedicated identity reduces exposure but does not by itself enforce separation of duties; effective group permissions must be checked. Phase 12 security gate remains unresolved; promotion is a lab exercise. Creation pending.
