@@ -49,3 +49,6 @@ Target flow: GitHub Actions Docker build/push with Build Info collection and pub
 
 ## Step 8 — Policy verification and navigation correction
 Screenshots of the existing policy editor verify block-high-critical, CVEs, minimum severity High, Generate violation and Fail Build actions, and enterprise-docker-watch under Apply on Scope. The policy editor explicitly states the watch list cannot be edited there. No policy changes required. Cancel, select Watches, edit enterprise-docker-watch via its action menu, and locate Manage Resources > Add Builds. Build coverage and pipeline enforcement remain pending.
+
+## Step 8 — Build selection
+Screenshot verifies Configure Selected Builds offers Any Build, By Name and By Pattern; By Name displays zero available builds. Cause not established; indexing and permissions may require configuration. Choose By Pattern with planned exact CI build name enterprise-docker-ci, rather than all builds. This is a new custom name to be reused in CI Build Info publication. Pattern acceptance, indexing, permissions and actual gate enforcement remain pending. Preserve existing repository and policy coverage.
