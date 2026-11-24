@@ -28,3 +28,6 @@ Screenshot showed one repository selected, enterprise-security-policy assigned (
 
 ## Step 6 — Evaluate existing content (pending)
 Locate enterprise-docker-watch in Xray > Watches & Policies > Watches. Use Apply on Existing Content (action placement may vary). If prompted for dates, include November 20, 2026, the existing Docker image creation date shown in Artifactory. Existing findings: 52 security issues including one Critical; previously no reported violations. Expect applicable High/Critical findings to generate violations after asynchronous evaluation. Actual counts and build failure remain unverified. No rebuild or re-upload required for this evaluation.
+
+## Watch persistence verification
+Screenshot confirms enterprise-docker-watch exists in Watches & Policies > Watches, one resource, one assigned enterprise-security-policy, Project Name All, and Enabled checked. Violations column shows Calculate, not a verified violation count. Repository name is not expanded. Next inspect the three-dot action menu for Apply on Existing Content; historical evaluation and build gate remain pending.
