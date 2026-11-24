@@ -57,3 +57,6 @@ User reported successful external nginx:alpine pull through docker-virtual after
 
 ## Step 5 — Inspect server-side Docker cache (pending)
 In Application > Artifactory > Artifacts, inspect docker-hub-remote-cache for nginx:alpine (typically library/nginx; exact tree varies). Look for manifests and cached content. Docker images comprise manifests, configuration and filesystem layers; an image index may reference platform-specific manifests. Digests identify content, whereas tags are mutable references. Identical layers can be reused, reducing repeated downloads and storage duplication. Enterprise example: multiple Java microservices share base image layers. Cache inspection remains pending.
+
+## Completion
+User confirmed inspecting the Docker server-side cache. Phase 07 is complete based on user confirmation of the external image pull and cache inspection. Continue to JFrog CLI.
