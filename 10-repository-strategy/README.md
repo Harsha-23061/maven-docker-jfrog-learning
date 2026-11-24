@@ -10,3 +10,6 @@ User confirmed creation of generic-qa-local and generic-prod-local.
 
 ## Step 2 — Environment access control (pending)
 Create generic-release-read permission target for both generic-qa-local and generic-prod-local, assigning existing maven-deployer Read only. Leave Deploy/Cache, Delete/Overwrite, Annotate and Manage disabled. Retain existing DEV Read and Deploy permissions. This is a chosen least-privilege learning model; effective access also depends on other permission targets and group memberships. A separate authorized release identity or promotion pipeline will handle promotion later. Verify direct unauthorized uploads are denied in a later negative test. Permission configuration pending.
+
+## Completion
+User confirmed generic-release-read permission configuration. Phase 10 configuration complete; effective permission enforcement and negative upload testing remain for promotion.
