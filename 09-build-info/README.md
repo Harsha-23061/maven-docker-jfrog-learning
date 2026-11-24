@@ -42,3 +42,9 @@ User supplied CLI output at 17:35:49 showing `generic-dev-local/releases/1.0.1/r
 jf rt build-publish "enterprise-demo-build" "1" --server-id=jfrog-trial
 ```
 Reuse the exact build name and number from upload. Artifact upload stores the file; build-publish sends collected build metadata to Artifactory. Build-specific permissions are distinct from repository deploy permissions. If HTTP 403 occurs, investigate build permission targets for the existing user before modifying access. Actual publication result pending.
+
+## Step 2 actual result — Build Info authorization failure
+On 2026-11-24 at 17:37:07, build-publish for enterprise-demo-build/1 returned HTTP 403, `User is not authorized to access build info` (trace ID 51f42efec94f3aaf). Artifact upload had already succeeded. Repository permissions and build permissions are separate.
+
+## Step 3 — Build permission remediation (pending)
+As administrator, navigate to Administration > User Management > Permissions and create enterprise-build-deploy (chosen name). Under Builds, scope access to enterprise-demo-build using the build selection or include pattern, and grant existing maven-deployer Read and Deploy permissions. Leave Delete/Overwrite, Annotate and Manage disabled where applicable. UI labels may vary. If the unpublished build cannot be selected, use a build include pattern where supported rather than broadening access unnecessarily. Reuse existing credentials subject to token scope. Retry build-publish after permission configuration; do not re-upload unless local build metadata is unavailable. Enterprise rationale: least privilege and separation of artifact publishing, build publishing, release management and administration. Remediation not yet verified.
