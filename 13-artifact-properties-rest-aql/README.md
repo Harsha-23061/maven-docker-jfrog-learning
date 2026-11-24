@@ -71,3 +71,9 @@ jf rt sp "generic-dev-local/releases/1.0.0/release-notes.txt" "release.status=te
 The standard CLI sp (set-properties) command targets the existing artifact and attempts to change release.status from pending to testing. Other properties should remain intact; verify actual state after execution. Annotate permission is required; current deployment-user permission is not assumed. If forbidden, inspect the relevant permission target rather than grant broad access. Custom lifecycle example: pending > testing > validated > approved > released. These labels do not execute tests, establish approval or physically promote artifacts. Phase 12 security enforcement remains unresolved. Execution pending.
 
 Interview question: What permission is needed to modify artifact properties? Annotate permission on the target artifact, scoped to the appropriate repository/path.
+
+## Step 6 result — Property mutation rejected
+Actual jf rt sp command returned HTTP 403 Forbidden while setting release.status=testing on generic-dev-local/releases/1.0.0/release-notes.txt. Trace ID e6d374917e656a74. Earlier Storage API and AQL reads succeeded. Missing Annotate permission is the likely cause, not yet verified by a successful retry.
+
+## Step 7 — Repository-scoped Annotate permission
+Administration > User Management > Permissions > generic-artifact-deploy. Verify scope is generic-dev-local and inspect maven-deployer permissions. Enable Annotate, retain Read and Deploy/Cache, leave Delete/Overwrite and Manage disabled, and save. Reuse existing permission target and token; no administrator elevation. Annotate authorizes property mutation independently of binary overwrite. This illustrates least privilege and RBAC. Permission change and retry pending. Interview question: Why can a user read properties but receive 403 when updating them? Read and Annotate are separate permissions; verify effective authorization on the target repository/path.
