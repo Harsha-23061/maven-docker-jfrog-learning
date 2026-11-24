@@ -36,3 +36,20 @@ jf rt curl -XGET "/api/storage/generic-dev-local/releases/1.0.0/release-notes.tx
 GET is read-only; /api/storage/ and ?properties are standard Artifactory API syntax; repository, path and server ID are existing project configuration. Expected properties object contains application=[enterprise-demo], environment=[dev], release.version=[1.0.0], release.status=[pending], team=[platform-engineering]. Values are arrays because properties may be multi-valued. Additional response fields may appear. Actual API response pending. Existing deployment profile is reused; no new credentials or permission changes planned. Official reference: https://docs.jfrog.com/artifactory/reference. Enterprise use: Jenkins/GitHub Actions retrieve metadata for automated release eligibility checks; metadata is not independent security approval.
 
 Interview question: Why use REST APIs rather than UI? APIs provide repeatable, authenticated machine-to-machine operations suitable for CI/CD automation.
+
+## Step 3 result — REST verification successful
+User supplied actual Storage API JSON containing all five expected properties: application=[enterprise-demo], environment=[dev], release.status=[pending], release.version=[1.0.0], team=[platform-engineering]. URI matched generic-dev-local/releases/1.0.0/release-notes.txt. Existing deployment credentials worked for property retrieval. No permission changes required. Arrays support multi-valued properties.
+
+## Step 4 — Introduction to AQL
+Artifactory Query Language searches items by repository, filename, path, metadata and other attributes. Unlike a Storage API lookup of a known path, AQL discovers matching items. Create a local query file using `notepad search-artifacts.aql` and save:
+```aql
+items.find({
+    "repo": "generic-dev-local",
+    "name": "release-notes.txt",
+    "@environment": "dev",
+    "@release.status": "pending"
+}).include("repo", "path", "name", "property")
+```
+All conditions must match. items.find(), @ property prefix and include() are standard AQL syntax; repository, filename and metadata are existing project values; query filename is chosen locally. Official reference: https://docs.jfrog.com/artifactory/docs/artifactory-query-language. Enterprise use: discover pending DEV artifacts before independent approval and security checks. Query creation and execution remain pending. Metadata is not security approval; Phase 12 enforcement limitation remains unresolved.
+
+Interview question: When would you choose AQL over the Storage API? Use AQL to discover items matching multiple conditions, and Storage API to retrieve metadata for a known item path.
