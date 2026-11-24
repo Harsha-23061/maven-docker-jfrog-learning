@@ -27,16 +27,24 @@ build() {
 }
 
 docker() {
-  local sha
+  local sha cid
+  echo "STAGE: Record JAR checksum"
   sha=$(sha256sum "$STAGING/app.jar" | cut -d ' ' -f 1)
   printf '%s  app.jar\n' "$sha" > "$STAGING/app.jar.sha256"
+
+  echo "STAGE: Build Docker image from tested JAR"
   docker build -f 15-enterprise-cicd/Dockerfile -t "enterprise-demo:$VERSION" "$STAGING"
-  local cid
+
+  echo "STAGE: Verify embedded JAR"
   cid=$(docker create "enterprise-demo:$VERSION")
-  trap 'docker rm "$cid" >/dev/null 2>&1 || true' RETURN
   docker cp "$cid:/app/app.jar" /tmp/container-app.jar
+  docker rm "$cid" >/dev/null
   cmp "$STAGING/app.jar" /tmp/container-app.jar
+
+  echo "STAGE: Verify non-root configuration"
   test "$(docker image inspect --format '{{.Config.User}}' "enterprise-demo:$VERSION")" = "10001:10001"
+
+  echo "STAGE: Run application smoke test"
   printf 'Hello and welcome!\ni = 1\ni = 2\ni = 3\ni = 4\ni = 5\n' > /tmp/expected-output.txt
   docker run --rm "enterprise-demo:$VERSION" > /tmp/actual-output.txt
   diff -u /tmp/expected-output.txt /tmp/actual-output.txt
