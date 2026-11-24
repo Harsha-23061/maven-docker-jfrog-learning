@@ -77,3 +77,6 @@ Actual jf rt sp command returned HTTP 403 Forbidden while setting release.status
 
 ## Step 7 — Repository-scoped Annotate permission
 Administration > User Management > Permissions > generic-artifact-deploy. Verify scope is generic-dev-local and inspect maven-deployer permissions. Enable Annotate, retain Read and Deploy/Cache, leave Delete/Overwrite and Manage disabled, and save. Reuse existing permission target and token; no administrator elevation. Annotate authorizes property mutation independently of binary overwrite. This illustrates least privilege and RBAC. Permission change and retry pending. Interview question: Why can a user read properties but receive 403 when updating them? Read and Annotate are separate permissions; verify effective authorization on the target repository/path.
+
+## Step 8 — Retry property mutation after permission change
+User confirmed enabling Annotate on the existing permission target. Retry `jf rt sp "generic-dev-local/releases/1.0.0/release-notes.txt" "release.status=testing" --server-id=jfrog-trial`. Expected one successful item and zero failures. Same artifact, command, user and token; only intended change is repository-scoped Annotate permission. Actual result pending. Verify stored property values after success; do not infer release approval from metadata.
