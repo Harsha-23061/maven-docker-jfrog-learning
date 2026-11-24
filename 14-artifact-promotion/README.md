@@ -22,3 +22,9 @@ User screenshot confirms existing local DEV and QA repositories and a truncated 
 
 ## Step 2 — Inspect existing permissions
 Administration > User Management > Permissions > generic-artifact-deploy. Inspect repository scope and existing maven-deployer permissions before any change. QA destination access must be verified for the planned copy operation. Do not modify permissions yet. Result pending.
+
+## Step 2 result — Existing permission scope verified
+User screenshot confirms generic-artifact-deploy selects only generic-dev-local. Preserve this target unchanged. Other permission targets were not audited, so effective QA/PROD access is not established.
+
+## Step 3 — Create separate QA promotion permission
+Create generic-qa-promote scoped only to generic-qa-local, assign maven-deployer Read, Deploy/Cache and Annotate; leave Delete/Overwrite and Manage disabled. Read supports verification, Deploy/Cache supports copying into QA, Annotate supports lifecycle metadata updates. Do not grant PROD access at this step. Separate targets permit independent environment control; reuse the deployment identity for this lab only, with separate promotion identities and approvals preferable in production. Creation pending confirmation.
