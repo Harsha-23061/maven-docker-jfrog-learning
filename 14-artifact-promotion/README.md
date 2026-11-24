@@ -137,3 +137,9 @@ Screenshot shows intended reviewer Harsha-23061 selected, required reviewers ena
 
 ## Step 11.4 — Restrict deployment branches
 Under production environment Deployment branches and tags, select Selected branches and tags, add a Branch rule matching main, and save. Only main is intended to be eligible, subject to manual approval. Other branches and tags are not allowed by this rule. Environment branch eligibility is distinct from branch protection and does not restrict direct Artifactory access. Configuration and runtime enforcement pending verification.
+
+## Step 11.4 result
+User confirmed saving protection rules and main branch restriction. Runtime enforcement not yet verified.
+
+## Step 12 — Isolated approval gate test
+Created [.github/workflows/production-approval-test.yml](../.github/workflows/production-approval-test.yml), commit d8f2e9ba82bfc5ee1ff71f56b1735f41680cbde0. Manual workflow_dispatch runs validate job (echo only), then production-approval job with needs: validate and environment: production. Workflow token contents: read. No JFrog credentials or artifact mutation. Run from main and verify deployment job waits for reviewer before approving. Expected waiting state; actual execution pending. This tests approval mechanics, not actual QA/security validation or independent separation of duties.
