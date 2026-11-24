@@ -104,3 +104,12 @@ if ($content.Trim() -ceq "Application release version 1.0.0") {
 }
 ```
 Expected content comes from the Phase 08 release notes creation exercise. CLI dl downloads from QA, Get-Content -Raw reads the file, Trim removes surrounding whitespace, -ceq compares case-sensitively, throw stops on failure. Expected PASS; actual execution pending. This is a simplified content test, not comprehensive QA or security approval. Production automation should use a fresh isolated download directory and verify download counts and errors. Phase 12 Xray enforcement remains unresolved.
+
+## Step 9 result — QA content validation passed
+Actual CLI download returned status success, success=1, failure=0. Exit-code check did not throw. PowerShell content comparison printed PASS: QA content validation successful. The defined text-file test passed; this is not comprehensive application QA or security approval.
+
+## Step 10 — Record QA validation status
+```powershell
+jf rt sp "generic-qa-local/releases/1.0.0/release-notes.txt" "release.status=validated" --server-id=jfrog-trial
+```
+Record the successful defined content test on the QA repository entry only. Expected success=1, failure=0; execution pending. Validated means defined tests passed, whereas approved means release authorization was granted. Both are project-defined metadata values, not native approval controls. Production approval requires independent governance and security checks. Phase 12 enforcement limitation remains unresolved; subsequent PROD repository promotion is a lab simulation only.
