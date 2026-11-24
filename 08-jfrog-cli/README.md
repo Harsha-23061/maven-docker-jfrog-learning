@@ -52,3 +52,6 @@ After entering the platform URL, CLI 2.77.0 displayed automatically derived URLs
 
 ## Reference token warning
 CLI reported that it could not extract the access token payload, suggesting a reference token rather than a JWT. This warning alone does not establish authentication failure. JWTs contain encoded claims; reference tokens are opaque and cannot be decoded locally to infer a username. At the optional username prompt enter the existing `maven-deployer` username, useful for package managers requiring basic authentication. Reuse the existing token; verify connectivity after saving. Never record token values in Git.
+
+## Step 4 — Connectivity verification (pending)
+User entered the existing username and returned to PowerShell without a reported configuration error. Run `jf rt ping --server-id=jfrog-trial`. The rt group targets Artifactory, ping checks connectivity using the saved configuration, and server-id selects our custom alias. The underlying Artifactory endpoint is GET /artifactory/api/system/ping; expected response OK. CI/CD can use this as a connectivity preflight. A successful ping does not establish repository authorization or prove token validity where anonymous ping is allowed; verify repository access separately. Actual ping result pending.
