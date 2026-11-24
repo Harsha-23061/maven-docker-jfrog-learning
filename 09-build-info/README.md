@@ -57,3 +57,6 @@ User confirmed saving the scoped build permission target. Effective authorizatio
 
 ## Step 4 actual result — authorization remains unresolved
 On 2026-11-24 at 17:40:43, retry returned HTTP 403 `User is not authorized to access build info` (trace ID 08434c9a2ce30406). The scoped permission change did not resolve the error. Inspect saved enterprise-build-deploy Users settings for effective Build Read/Deploy assignment, then verify pattern matching and token scope if necessary. Do not broaden permissions or rotate credentials before isolating the cause. Publication remains pending.
+
+## Build permission diagnostic — user assignment verified
+Screenshot confirms maven-deployer has Build Read and Deploy enabled, with other build privileges disabled. Next diagnostic: test scoped include pattern `enterprise-demo-build/**` instead of the exact name to check underlying build path matching. Keep unrestricted wildcard access disabled. Retry publication. Pattern hypothesis is not yet verified; token scope remains another possible cause.
