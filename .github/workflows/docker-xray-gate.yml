@@ -1,0 +1,46 @@
+name: Phase 12 - Docker Xray Security Gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-security-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BUILD_NAME: enterprise-docker-ci
+      JFROG_URL: https://trialgccoro.jfrog.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+      - name: Configure JFrog CLI
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        run: |
+          jf config add jfrog-trial --url="$JFROG_URL" --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          jf rt ping --server-id=jfrog-trial
+          printf '%s' "$JFROG_TOKEN" | docker login trialgccoro.jfrog.io --username "$JFROG_USER" --password-stdin
+      - name: Build Docker image
+        run: |
+          BUILD_NUMBER="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          IMAGE="trialgccoro.jfrog.io/docker-trial/maven-docker-demo:gate-${BUILD_NUMBER}"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          docker build --file 04-docker-cicd/Dockerfile --tag "$IMAGE" 01-maven-docker-artifactory
+      - name: Push image and collect Build Info
+        run: jf docker push "$IMAGE" --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --skip-login=true
+      - name: Publish Build Info
+        run: jf rt build-publish "$BUILD_NAME" "$BUILD_NUMBER" --server-id=jfrog-trial
+      - name: Xray build security gate
+        run: jf build-scan "$BUILD_NAME" "$BUILD_NUMBER" --server-id=jfrog-trial --fail=true
+      - name: Security gate passed
+        run: echo "Security gate passed. Eligible for subsequent deployment checks."
+      - name: Log out
+        if: always()
+        run: docker logout trialgccoro.jfrog.io || true
