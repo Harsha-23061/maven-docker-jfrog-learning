@@ -140,3 +140,6 @@ User reports no Ignore Rules. Navigate Platform > Xray > Watches & Policies > Wa
 
 ## Step 34 — Verify build-specific violations after reevaluation
 User confirmed applying the watch to existing content. Navigate Platform > Xray > Scans List > Builds > enterprise-docker-ci > Build Versions > 45411263512-3 > Policy Violations. Inspect whether violations now appear for this specific build. Reevaluation completion and blocking enforcement are not yet verified. Do not rerun or change configuration until the result is inspected. Restore High after controlled testing.
+
+## Step 35 — Persistent zero build violations and REST diagnostic
+Build Versions screenshot shows 45417467925-2, 45417467925-1, 45411263512-3 and 45411263512-2 each with 45 vulnerabilities and zero violations after user reported applying the watch to existing content. Reevaluation completion is not independently established. Component detection works; policy enforcement remains unresolved. Inspect saved watch configuration using read-only `jf xr curl -XGET "/api/v2/watches/enterprise-docker-watch" --server-id=jfrog-trial`. Access depends on Xray permissions; a 403 is a diagnostic result, not justification for broadening permissions blindly. Redact personal contact details before sharing. No new pipeline run or configuration change requested. Restore High after controlled testing.
