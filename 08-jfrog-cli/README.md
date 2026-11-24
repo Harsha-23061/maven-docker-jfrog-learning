@@ -89,3 +89,9 @@ User confirmed artifact download completion; exact output and method were not su
 
 ## Step 8 — Generic artifact upload preparation (pending)
 Create a local Generic repository named `generic-dev-local` in Administration > Repositories > Local. The repository key is chosen by us: package type, environment, repository type. Generic repositories store arbitrary files such as ZIP archives, binaries, deployment scripts, reports and non-secret configuration templates without Maven-specific coordinates or metadata. Maven deploy remains appropriate for Maven packages; CLI upload is useful for generic files. Use a separate repository to avoid mixing package types. Next grant least-privilege read/deploy access to the existing deployment user before uploading a test file. Repository creation and upload not yet verified.
+
+## Step 8 verification
+User confirmed creation of generic-dev-local.
+
+## Step 9 — Generic repository permissions (pending)
+Create permission target generic-artifact-deploy (chosen name) for generic-dev-local and existing maven-deployer user. Grant Read and Deploy/Cache only; leave Delete/Overwrite, Annotate and Manage disabled. Reuse existing CLI configuration and token subject to token scope. Production may use separate service identities to isolate pipelines. Permission creation and upload verification pending.
