@@ -88,3 +88,6 @@ Navigate Platform > Artifactory > Builds > enterprise-docker-ci > 45403921117-3 
 
 ## Steps 17–18 — Xray UI verification
 Scans List > Builds screenshot shows enterprise-docker-ci in artifactory-build-info with one indexed version, latest 45403921117-3. Build Overview subsequently displays All clear! No vulnerabilities found, consistent with successful CI execution. This is a reported result, not proof of complete Docker component coverage. Next select Build Versions and open 45403921117-3 to inspect components/dependencies. No configuration changes or reruns required. Policy-based rejection remains unverified.
+
+## Step 19 — Build version scan summary
+Screenshot of Xray Build Versions confirms 45403921117-3 reports 0 violations, 0 vulnerabilities and malicious packages Not Found. Open the version number to inspect detailed component coverage. No new configuration or workflow run required. Complete Docker scan coverage and policy-triggered rejection remain unverified.
