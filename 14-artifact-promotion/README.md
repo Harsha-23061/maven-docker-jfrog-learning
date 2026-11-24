@@ -86,3 +86,21 @@ Write-Host "QA Environment: $($qaProps.properties.environment)"
 Write-Host "QA Status: $($qaProps.properties.'release.status')"
 ```
 Expected DEV dev/testing and QA qa/qa-pending. Actual result pending. Curl -sS suppresses progress while retaining error messages. Quote dotted property names in PowerShell member access. Artifactory checksum-based binary storage supports independent repository entries and lifecycle metadata. This verifies metadata isolation, not QA validation or security approval. Interview question: Can identical binaries have different release metadata in separate repositories? Yes, repository entries and their properties are independent of the binary content.
+
+## Step 8 result — Environment isolation verified
+Actual user output: DEV Environment: dev; DEV Status: testing; QA Environment: qa; QA Status: qa-pending. Independent lifecycle metadata confirmed for the previously checksum-verified identical artifacts.
+
+## Step 9 — QA content validation
+```powershell
+jf rt dl "generic-qa-local/releases/1.0.0/release-notes.txt" "./qa-validation/" --flat=true --server-id=jfrog-trial
+if ($LASTEXITCODE -ne 0) {
+    throw "QA artifact download failed"
+}
+$content = Get-Content "./qa-validation/release-notes.txt" -Raw
+if ($content.Trim() -ceq "Application release version 1.0.0") {
+    Write-Host "PASS: QA content validation successful" -ForegroundColor Green
+} else {
+    throw "FAIL: Unexpected artifact content"
+}
+```
+Expected content comes from the Phase 08 release notes creation exercise. CLI dl downloads from QA, Get-Content -Raw reads the file, Trim removes surrounding whitespace, -ceq compares case-sensitively, throw stops on failure. Expected PASS; actual execution pending. This is a simplified content test, not comprehensive QA or security approval. Production automation should use a fresh isolated download directory and verify download counts and errors. Phase 12 Xray enforcement remains unresolved.
