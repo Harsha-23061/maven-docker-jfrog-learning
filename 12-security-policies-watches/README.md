@@ -194,3 +194,6 @@ In Xray Policies, edit enterprise-security-policy rule block-high-critical, rest
 
 ## Step 48 — Revoke temporary administrator token
 User confirmed restoring the policy minimum severity to High. Build-level enforcement remains unresolved. Navigate to Administration > User Management > Access Tokens, locate temporary-xray-policy-diagnostic for xray-admin-diagnostic and revoke it if still active. Preserve maven-deployer credentials used by CI/CD. This demonstrates least privilege, short-lived administrative access and credential lifecycle management. Revocation pending confirmation; local diagnostic CLI profile removal follows separately.
+
+## Step 49 — Remove temporary CLI profile
+User confirmed revocation of temporary administrator token. Run `jf config remove jfrog-admin-diagnostic`, confirm if prompted, then `jf config show`. Expected: only jfrog-trial remains, default=true. Server-side revocation invalidates credentials; local profile removal cleans stored configuration. Preserve deployment credentials and CI secrets. Local removal pending confirmation. Build-level policy enforcement remains unresolved and is not approved for production promotion.
