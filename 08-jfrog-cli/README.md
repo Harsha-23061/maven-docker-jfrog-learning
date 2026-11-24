@@ -108,3 +108,6 @@ The source file and target subpath are chosen by us; generic-dev-local is the ex
 
 ## Phase completion
 User confirmed generic artifact upload and UI verification. Phase 08 complete based on user confirmations; exact upload output not supplied. Continue to Build Info.
+
+## Actual upload evidence
+On 2026-11-24 at 15:27, user supplied CLI output confirming upload to `generic-dev-local/releases/1.0.0/release-notes.txt`: status success, success 1, failure 0. The command did not include build-name or build-number, so this verifies Phase 08 only. Phase 09 artifact association remains pending.
