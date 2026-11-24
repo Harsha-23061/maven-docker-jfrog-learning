@@ -185,3 +185,9 @@ User confirmed production token generation; actual scope, expiration and authent
 
 ## Step 14.5 — Protected environment secrets
 GitHub repository Settings > Environments > production > Environment secrets > Add environment secret. Create JFROG_PROD_USER with value production-promoter and JFROG_PROD_TOKEN with the newly generated token. Names are project-defined. Preserve existing repository secrets JFROG_USER and JFROG_TOKEN used by existing workflows. Environment secrets become available to jobs referencing production after configured protection rules pass. This controls workflow credential access, not direct use of the token outside GitHub. Never commit or print credentials. Secret creation and authentication pending verification. Phase 12 security enforcement remains unresolved.
+
+## Step 14.5 result
+User confirmed both production environment secrets created; authentication pending.
+
+## Step 14.6 — Production access verification
+Created [.github/workflows/production-access-verification.yml](../.github/workflows/production-access-verification.yml). Manual trigger from main, environment production, required approval, protected credentials. Bash curl Storage API checks QA artifact and PROD repository HTTP 200, DEV artifact HTTP 403. Unexpected statuses fail closed, including 404 which may represent hidden resources and requires investigation rather than automatic success. Response bodies discarded; no credentials printed. No mutation. Write/delete restrictions remain untested. Runtime result pending. Phase 12 security enforcement remains unresolved.
