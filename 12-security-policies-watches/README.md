@@ -191,3 +191,6 @@ User reported PowerShell LASTEXITCODE=0 following explicit administrator rescan.
 
 ## Step 47 — Restore intended severity threshold
 In Xray Policies, edit enterprise-security-policy rule block-high-critical, restore minimum severity from Low to High, retain Fail Build, and save. Low was temporary for negative testing. Restoration is pending user confirmation and does not resolve enforcement. Next revoke temporary administrator token and remove its CLI profile before proceeding to Phase 13. No admin credentials should enter CI. Production promotion requires independently verified security enforcement.
+
+## Step 48 — Revoke temporary administrator token
+User confirmed restoring the policy minimum severity to High. Build-level enforcement remains unresolved. Navigate to Administration > User Management > Access Tokens, locate temporary-xray-policy-diagnostic for xray-admin-diagnostic and revoke it if still active. Preserve maven-deployer credentials used by CI/CD. This demonstrates least privilege, short-lived administrative access and credential lifecycle management. Revocation pending confirmation; local diagnostic CLI profile removal follows separately.
