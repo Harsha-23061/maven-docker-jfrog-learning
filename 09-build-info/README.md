@@ -25,3 +25,11 @@ On 2026-11-24 at 15:30:34, build-publish for enterprise-demo-build/1 returned HT
 
 ## Step 3 — Build permissions (pending)
 As administrator, create permission target build-info-deploy (chosen name), select Builds and scope to enterprise-demo-build, using an exact include pattern if supported. Grant existing maven-deployer Read and Deploy build permissions; leave Delete, Annotate and Manage disabled. UI labels may vary. Do not grant administrator access or rotate tokens merely for this error. Retry the existing build-publish command after permission configuration; no repeat upload needed unless local metadata is missing. HTTP 401 generally indicates authentication failure; 403 indicates access forbidden. This exercise demonstrates separation of artifact and build permissions and least privilege. Resolution pending.
+
+## Current exercise — collect Build Info
+Upload a new generic release file with build metadata:
+```powershell
+"Application release version 1.0.1" | Set-Content release-notes-1.0.1.txt
+jf rt upload "release-notes-1.0.1.txt" "generic-dev-local/releases/1.0.1/" --flat=true --build-name="enterprise-demo-build" --build-number="1" --server-id=jfrog-trial
+```
+Build name and number are chosen identifiers; CI normally generates unique numbers. Upload collects metadata locally; publication is separate and requires build permissions. Build Info supports traceability, auditing, security scanning and promotion. Avoid collecting secrets. Upload verification pending.
