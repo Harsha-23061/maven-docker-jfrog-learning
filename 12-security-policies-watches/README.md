@@ -34,3 +34,9 @@ Screenshot confirms enterprise-docker-watch exists in Watches & Policies > Watch
 
 ## Step 6 diagnostic
 Latest screenshot shows enabled watch and calculated violation count 0. Historical evaluation initiation/completion is not established by the screenshot. Earlier scan showed 52 security issues including one Critical. Inspect watch action menu for Apply on Existing Content before changing configuration. Zero violations does not establish absence of vulnerabilities. Build gate remains unverified.
+
+## Step 6 — Historical evaluation verified (2026-11-24)
+User applied enterprise-docker-watch to existing content using Last 7 Days (18/11/2026–25/11/2026), including the Docker image uploaded November 20. Subsequent screenshot shows 263 violations, up from 0, with watch enabled and enterprise-security-policy assigned. Historical policy evaluation verified. Earlier 52 security issues were from an individual image index; 263 violations are watch-level results and do not establish 263 unique CVEs. Exact breakdown remains unverified. No rebuild required. CI/CD Fail Build enforcement remains untested.
+
+## Step 7 — Inspect violations (pending)
+Navigate Platform > Xray > Watch Violations (visible in expanded sidebar). Inspect enterprise-docker-watch results, severity, affected artifacts and triggering policy rule. Record actual evidence before implementing the automated build gate.
