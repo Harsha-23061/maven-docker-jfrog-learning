@@ -197,3 +197,6 @@ User confirmed restoring the policy minimum severity to High. Build-level enforc
 
 ## Step 49 — Remove temporary CLI profile
 User confirmed revocation of temporary administrator token. Run `jf config remove jfrog-admin-diagnostic`, confirm if prompted, then `jf config show`. Expected: only jfrog-trial remains, default=true. Server-side revocation invalidates credentials; local profile removal cleans stored configuration. Preserve deployment credentials and CI secrets. Local removal pending confirmation. Build-level policy enforcement remains unresolved and is not approved for production promotion.
+
+## Phase 12 closure
+Step 49 verified: user confirmed removal and config show lists only jfrog-trial, maven-deployer, default=true. Temporary token revoked and policy restored to High per user confirmation. Phase closed for learning progression with unresolved build-level enforcement; negative test returned zero exit despite detected vulnerabilities at temporary Low threshold. Do not treat green scan as production approval. Revisit enforcement before final production deployment.
