@@ -32,3 +32,19 @@ Directly inspected [Enterprise CI run 45443403167, job 138620524532](https://git
 
 ## Step 7 — Publish tested Docker image and verify registry digest
 Extended enterprise-ci.yml after Maven publication, main only. Reuse existing deployment credentials with password-stdin and cleanup logout. Tag existing local enterprise-demo image with trialgccoro.jfrog.io/docker-trial/enterprise-demo:$VERSION, push without rebuilding, parse digest from push output, pull by immutable digest, compare local platform image IDs and extract registry image JAR for byte comparison against staged tested JAR. Save digest-qualified reference in staging/docker-image-ref.txt for CI evidence. Pull may reuse local cached layers; this verifies registry reference resolution and local content identity, not a clean-machine full download. New run creates a new unique release version. Runtime validation pending. No Build Info or security approval yet; partial publication may remain on failure. References: https://docs.docker.com/reference/cli/docker/image/push/ and https://docs.docker.com/reference/cli/docker/image/pull/.
+
+## Step 7.1 — Docker publication verified
+Directly inspected [GitHub Actions run #45443985614](https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45443985614), job #138622564524: conclusion success. JUnit **1 passed, 0 failed**; Maven JAR and POM verified after publication to `libs-release-local`; Docker smoke test and non-root verification passed; Docker image published to `docker-trial` and digest-qualified registry reference pulled and compared with local tested image and embedded JAR. Published version `1.0.7-ci-45443985614-1`. Verified JAR SHA-256 `4cd38049aa0bae22c2c83f14fab140c1e66613d29a60d359d1f794c3a467e543`. Docker registry digest `sha256:85490bc628c1070efdd39c1ca4d97f2a33b9a355513507e513cb01d7bd7a2395`. GitHub evidence artifact `tested-maven-1.0.7-ci-45443985614-1`, artifact ID 14945870915. Existing Node.js 20 deprecation warning for actions @v4 remains non-blocking. No Build Info or Xray enforcement validation was performed by this run.
+
+## Step 7.2 — Refactor for readability
+User requested simple, accurate GitHub Actions code. Extracted implementation commands to [pipeline.sh](pipeline.sh) and reduced [enterprise-ci.yml](../.github/workflows/enterprise-ci.yml) to four clearly labeled shell stages: `build`, `docker`, `maven-publish`, `docker-publish`. The pipeline still performs unique versioning, JUnit test report enforcement, build-once staging, Docker JAR byte check, non-root configuration, smoke test, Maven JAR/POM read-back comparison, Docker registry digest pull/byte check, and CI evidence upload. Existing secrets are only passed to publication steps. Bash `set -euo pipefail` and cleanup remain in the script. The simplified YAML and new script were committed after the successful run, so **the refactor itself remains to be tested**; the older inlined version's success is not proof the refactored workflow passes. The source is now easier to study: YAML is what happens, shell functions are how. No new repositories, users or secrets. This phase is not a production security approval; Xray build-level policy enforcement remains unresolved.
+
+### Command quick reference
+- `mvn versions:set` — assign unique CI version (metadata change, not compiling).
+- `mvn clean verify` — compile, run JUnit test and package one JAR.
+- `sha256sum` / `cmp` — verify integrity before and after publication.
+- `docker build` — package existing JAR in runtime image; no second Maven build.
+- `mvn deploy:deploy-file` — publish existing JAR/POM without re-running Maven lifecycle.
+- `docker tag`, `docker push`, `docker pull` — publish and resolve immutable image digest.
+- `docker login --password-stdin` — avoid printing a credential in command arguments.
+- `set -euo pipefail` — stop on failed commands, unset variables, and pipeline failures.
