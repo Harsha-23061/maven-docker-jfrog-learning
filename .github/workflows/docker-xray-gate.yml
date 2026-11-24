@@ -36,7 +36,13 @@ jobs:
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
           docker build --provenance=false --sbom=false --file 04-docker-cicd/Dockerfile --tag "$IMAGE" 01-maven-docker-artifactory
       - name: Push image and collect Build Info
-        run: jf docker push "$IMAGE" --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --skip-login=true --module="maven-docker-demo"
+        run: |
+          set -euo pipefail
+          docker push "$IMAGE" | tee docker-push.log
+          DIGEST=$(sed -nE 's/.*digest: (sha256:[a-f0-9]{64}).*/\1/p' docker-push.log | tail -n 1)
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          printf '%s@%s\n' "$IMAGE" "$DIGEST" > image-file-details.txt
+          jf rt build-docker-create docker-trial --image-file=image-file-details.txt --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --module=maven-docker-demo
       - name: Publish Build Info
         run: jf rt build-publish "$BUILD_NAME" "$BUILD_NUMBER" --server-id=jfrog-trial
       - name: Validate published Docker Build Info
