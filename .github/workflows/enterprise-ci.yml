@@ -71,6 +71,36 @@ jobs:
           echo "PASS: Published Maven JAR and POM match staged files"
           echo "JFrog JAR SHA-256: $(sha256sum /tmp/jfrog-app.jar | cut -d ' ' -f 1)"
           echo "Published Maven version: $VERSION"
+      - name: Publish and verify tested Docker image
+        if: github.ref == 'refs/heads/main'
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          REGISTRY=trialgccoro.jfrog.io
+          REPO="$REGISTRY/docker-trial/enterprise-demo"
+          IMAGE="$REPO:$VERSION"
+          printf '%s' "$JFROG_TOKEN" | docker login "$REGISTRY" --username "$JFROG_USER" --password-stdin
+          trap 'docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+          docker tag "enterprise-demo:$VERSION" "$IMAGE"
+          docker push "$IMAGE" | tee /tmp/enterprise-push.log
+          DIGEST=$(sed -nE 's/.*digest: (sha256:[a-f0-9]{64}).*/\1/p' /tmp/enterprise-push.log | tail -n 1)
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          REF="$REPO@$DIGEST"
+          docker pull "$REF"
+          test "$(docker image inspect --format '{{.Id}}' "$REF")" = "$(docker image inspect --format '{{.Id}}' "enterprise-demo:$VERSION")"
+          CID=$(docker create "$REF")
+          trap 'docker rm "$CID" >/dev/null 2>&1 || true; docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+          docker cp "$CID:/app/app.jar" /tmp/registry-app.jar
+          cmp staging/app.jar /tmp/registry-app.jar
+          printf '%s\n' "$REF" > staging/docker-image-ref.txt
+          echo "PASS: Registry image matches tested local image and Maven JAR"
+          echo "Published Docker image: $IMAGE"
+          echo "Registry image digest: $DIGEST"
       - name: Retain tested Maven artifact and evidence
         uses: actions/upload-artifact@v4
         with:
