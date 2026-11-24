@@ -143,3 +143,9 @@ User confirmed saving protection rules and main branch restriction. Runtime enfo
 
 ## Step 12 — Isolated approval gate test
 Created [.github/workflows/production-approval-test.yml](../.github/workflows/production-approval-test.yml), commit d8f2e9ba82bfc5ee1ff71f56b1735f41680cbde0. Manual workflow_dispatch runs validate job (echo only), then production-approval job with needs: validate and environment: production. Workflow token contents: read. No JFrog credentials or artifact mutation. Run from main and verify deployment job waits for reviewer before approving. Expected waiting state; actual execution pending. This tests approval mechanics, not actual QA/security validation or independent separation of duties.
+
+## Step 12 result — Manual approval waiting state verified
+User screenshot shows Production Approval Test #1 manually triggered from main at commit 2d0633c, validate succeeded in 3 seconds, workflow Waiting, production-approval waiting for review, and Review deployments button. This confirms runtime approval gating before job execution. Branch rejection and administrator bypass behavior have not been independently tested.
+
+## Step 13 — Approve isolated test deployment
+Click Review deployments, select production, optionally enter comment 'Approved for enterprise promotion learning exercise.', then Approve and deploy. Expected production job success with log 'Production approval gate passed'. Actual result pending. No artifact promotion or JFrog credentials involved. Single-user approval is a lab demonstration, not independent release authorization. Phase 12 security limitation remains unresolved.
