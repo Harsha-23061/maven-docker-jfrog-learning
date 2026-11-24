@@ -28,3 +28,12 @@ User screenshot confirms generic-artifact-deploy selects only generic-dev-local.
 
 ## Step 3 — Create separate QA promotion permission
 Create generic-qa-promote scoped only to generic-qa-local, assign maven-deployer Read, Deploy/Cache and Annotate; leave Delete/Overwrite and Manage disabled. Read supports verification, Deploy/Cache supports copying into QA, Annotate supports lifecycle metadata updates. Do not grant PROD access at this step. Separate targets permit independent environment control; reuse the deployment identity for this lab only, with separate promotion identities and approvals preferable in production. Creation pending confirmation.
+
+## Step 3 result
+User confirmed creation of generic-qa-promote as instructed. Effective access will be tested by the copy operation.
+
+## Step 4 — Copy DEV artifact to QA
+```powershell
+jf rt cp "generic-dev-local/releases/1.0.0/release-notes.txt" "generic-qa-local/releases/1.0.0/" --flat=true --server-id=jfrog-trial
+```
+Standard CLI cp performs server-side copy, preserving DEV source. Explicit destination folder and flat=true avoid recreating source hierarchy. Reuse configured deployment identity and server alias. Source Read and destination Deploy/Cache are required. Expected success=1, failure=0; actual result pending. Verify destination and checksums subsequently. Copy rather than move preserves source for traceability and independent testing. This is simulated promotion, not QA validation or security approval.
