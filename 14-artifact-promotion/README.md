@@ -16,3 +16,9 @@ Administration > Repositories > Local > Create Repository. Select Generic, repos
 
 ## Interview question
 Why build once and promote rather than rebuild per environment? Reusing the same binary reduces variation between tested and released artifacts, supports traceability, and enables checksum-based integrity verification. Environment-specific configuration should be supplied separately where appropriate.
+
+## Step 1 correction — Reuse existing repositories
+User screenshot confirms existing local DEV and QA repositories and a truncated generic-prod-l... local repository consistent with the planned PROD name. Skip creation; these were provisioned earlier. No duplicate repositories needed.
+
+## Step 2 — Inspect existing permissions
+Administration > User Management > Permissions > generic-artifact-deploy. Inspect repository scope and existing maven-deployer permissions before any change. QA destination access must be verified for the planned copy operation. Do not modify permissions yet. Result pending.
