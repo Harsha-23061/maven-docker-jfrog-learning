@@ -21,3 +21,6 @@ Run `jf --version` in existing PowerShell session. If installed, reuse it; other
 
 ## Interview note
 Why use JFrog CLI instead of the UI? Repeatable, scriptable operations for CI/CD and administration, including bulk artifact transfers and build traceability. Native package clients remain useful for package-specific operations.
+
+## Step 2 — Windows installation (pending)
+The user ran `jf --version` and received CommandNotFoundException: jf is not recognized. CLI is either absent or not on PATH. Try `winget install --id JFrog.CLI --exact`, reopen PowerShell and verify `jf --version`. If the package is unavailable, consult official installation documentation at https://docs.jfrog-applications.jfrog.io/jfrog-applications/jfrog-cli. New PowerShell sessions may require restoring session-specific JFROG_USER and JFROG_TOKEN variables. Reuse existing valid credentials. Git manages source code, Maven builds Java, Docker manages containers, JFrog CLI automates artifact operations, and kubectl manages Kubernetes.
