@@ -37,3 +37,9 @@ $env:Path += ";$jfrogDir"
 jf --version
 ```
 The directory stores the executable; user PATH persists across sessions, while env:Path updates the current process. No administrator privileges normally required. Verify download integrity against official release checksums where available. Installation verification pending.
+
+## Installation verification
+User confirmed completion of manual CLI installation; exact version output was not supplied.
+
+## Step 3 — Configure server connection (pending)
+Run `jf config add jfrog-trial` interactively. Use platform URL `https://trialgccoro.jfrog.io` and existing maven-deployer access token; accept default service URLs if prompted. Server ID is a local alias for connection configuration, allowing scripts to select instances without repeating connection details. Enterprises may use separate aliases for dev, QA and production instances where applicable. CLI configuration normally resides under the user's `.jfrog` directory; never commit it or credentials. No new token or repository required. Connectivity verification follows configuration.
