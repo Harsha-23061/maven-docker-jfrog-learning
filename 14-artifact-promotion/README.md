@@ -125,3 +125,9 @@ User screenshot confirms no GitHub environments exist in this repository.
 
 ## Step 11.2 — Create production environment
 Settings > Environments > New environment > name production > Configure environment. Name is project-defined. GitHub environment controls deployment workflow execution, whereas generic-prod-local stores artifacts. Creation alone does not enforce approval; protection rules must be configured and tested. Creation pending confirmation. Phase 12 security limitation remains unresolved.
+
+## Step 11.2 result
+Screenshot confirms production environment created and Required reviewers option available. No protection rules configured yet.
+
+## Step 11.3 — Configure manual approval
+Enable Required reviewers, select Harsha-23061, leave Prevent self-review unchecked for single-user lab, leave Wait timer disabled, uncheck Allow administrators to bypass configured protection rules, and save. Configuration pending confirmation. Required reviewers gate environment-referencing deployment jobs; disabling bypass does not prevent administrators from editing settings. Single-user self-approval demonstrates workflow mechanics but not independent separation of duties. Enterprise practice is independent reviewers and prevention of self-review. Approval enforcement must be tested with a workflow. Phase 12 security limitation remains unresolved.
