@@ -1,0 +1,22 @@
+name: Production Approval Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simulate validation
+        run: echo "Approval gate test started"
+
+  production-approval:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Verify approval gate
+        run: echo "Production approval gate passed"
