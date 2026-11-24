@@ -1,0 +1,18 @@
+# Phase 14 — Enterprise Artifact Promotion
+
+## Objectives and architecture
+Build once, deploy many: promote the same versioned binary through DEV, QA and PROD without rebuilding. Promotion can copy or move an existing artifact subject to permissions and approval. Verify integrity using checksums. Repository metadata is not independent approval. Architecture: GitHub source > CI build > DEV repository > validation/security checks > QA repository > release approval > PROD repository.
+
+| Repository | Purpose | Status |
+|---|---|---|
+| generic-dev-local | Development artifacts | Existing |
+| generic-qa-local | QA artifacts | Planned |
+| generic-prod-local | Production artifacts | Planned |
+
+Names are project-defined. Reuse generic-dev-local/releases/1.0.0/release-notes.txt for the initial learning exercise; later apply concepts to Maven and Docker. Phase 12 native build-level security enforcement remains unresolved; this exercise is not production release approval.
+
+## Step 1 — Create QA repository
+Administration > Repositories > Local > Create Repository. Select Generic, repository key generic-qa-local, optional description QA artifacts validated for release testing. Leave remaining settings at defaults and create. Creation pending user confirmation. No new token or permission changes yet.
+
+## Interview question
+Why build once and promote rather than rebuild per environment? Reusing the same binary reduces variation between tested and released artifacts, supports traceability, and enables checksum-based integrity verification. Environment-specific configuration should be supplied separately where appropriate.
