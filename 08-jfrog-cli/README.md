@@ -70,3 +70,13 @@ User confirmed completion after editing the existing configuration with verified
 jf rt search "libs-release-local/**/*.jar" --server-id=jfrog-trial
 ```
 Search is read-only. `jf rt search` is standard CLI syntax, libs-release-local is our existing Maven repository, the wildcard pattern selects nested JAR files, and jfrog-trial is our local alias. Expected JSON includes matching paths and artifact metadata such as size, timestamps and checksums. Enterprise use cases include release discovery, deployment validation, inventory and retention reviews. Search output can be consumed by scripts and CI/CD. Actual result pending.
+
+## Step 6 verification
+User confirmed artifact search completion; exact JSON output not supplied.
+
+## Step 7 — Download existing artifact (pending)
+```powershell
+jf rt download "libs-release-local/com/example/maven-docker-artifactory/1.0.7/maven-docker-artifactory-1.0.7.jar" "./jfrog-downloads/" --flat=true --server-id=jfrog-trial
+Get-ChildItem .\jfrog-downloads\
+```
+Source path is derived from existing Maven coordinates and repository. Destination is a chosen local folder. Flat mode avoids recreating the repository hierarchy; server-id selects our saved alias. Expected JAR is maven-docker-artifactory-1.0.7.jar. Enterprise principle: build once, deploy many; promote the same verified artifact across DEV, QA and PROD rather than rebuilding per environment, preserving checksums. Download verification pending.
