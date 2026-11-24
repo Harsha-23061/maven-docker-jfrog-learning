@@ -72,3 +72,17 @@ User supplied QA Storage API JSON confirming all five properties copied unchange
 jf rt sp "generic-qa-local/releases/1.0.0/release-notes.txt" "environment=qa;release.status=qa-pending" --server-id=jfrog-trial
 ```
 Semicolon separates property assignments in the CLI argument. Update only QA metadata; DEV should retain environment=dev and release.status=testing. Other three properties should remain unchanged. The custom status qa-pending is chosen for this lab to represent awaiting QA validation, not a built-in JFrog state. Planned lifecycle: DEV testing > QA qa-pending > QA validated after tests > PROD released after required approvals and promotion. Actual mutation and isolation verification pending. Phase 12 security enforcement limitation remains unresolved.
+
+## Step 7 result
+User supplied successful CLI output: success=1, failure=0 for QA metadata update. Persisted values and DEV isolation still require verification.
+
+## Step 8 — Verify environment isolation
+```powershell
+$devProps = jf rt curl -sS -XGET "/api/storage/generic-dev-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial | ConvertFrom-Json
+$qaProps = jf rt curl -sS -XGET "/api/storage/generic-qa-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial | ConvertFrom-Json
+Write-Host "DEV Environment: $($devProps.properties.environment)"
+Write-Host "DEV Status: $($devProps.properties.'release.status')"
+Write-Host "QA Environment: $($qaProps.properties.environment)"
+Write-Host "QA Status: $($qaProps.properties.'release.status')"
+```
+Expected DEV dev/testing and QA qa/qa-pending. Actual result pending. Curl -sS suppresses progress while retaining error messages. Quote dotted property names in PowerShell member access. Artifactory checksum-based binary storage supports independent repository entries and lifecycle metadata. This verifies metadata isolation, not QA validation or security approval. Interview question: Can identical binaries have different release metadata in separate repositories? Yes, repository entries and their properties are independent of the binary content.
