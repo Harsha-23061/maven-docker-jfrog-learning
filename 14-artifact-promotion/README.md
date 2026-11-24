@@ -197,3 +197,15 @@ Screenshot confirms Production Access Verification #1 succeeded, verify-access j
 
 ## Step 14.7 — Capture detailed access evidence
 Expand Verify repository read permissions and inspect the three HTTP status codes before proceeding to QA-to-PROD promotion. No rerun required.
+
+## Step 14.7 — Exact GitHub job logs verified
+GitHub connector fetched workflow run `45439548317`, job `138606528108`, conclusion success, from https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45439548317/job/138606528108. The recorded outputs were:
+```
+QA artifact read: HTTP 200
+PASS: QA artifact read
+PROD repository read: HTTP 200
+PASS: PROD repository read
+DEV artifact read denied: HTTP 403
+PASS: DEV artifact read denied
+```
+These are direct GitHub job logs, not inferred from the screenshot. Dedicated production identity read isolation validated for these exact endpoints. QA write and PROD delete/overwrite restrictions remain untested. No secret values were inspected or recorded. Going forward inspect logs through connected GitHub when run IDs are available, avoiding redundant screenshot requests.
