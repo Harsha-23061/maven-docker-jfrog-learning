@@ -22,3 +22,16 @@ User confirmed saving Docker remote permissions.
 
 ## Step 3 — Docker virtual repository (pending)
 Administration > Repositories > Create a Repository > Virtual > Docker. Key docker-virtual; members docker-trial (first) and docker-hub-remote; default deployment repository docker-trial. Reuse existing local repository. Example image reference: trialgccoro.jfrog.io/docker-virtual/nginx:alpine instead of nginx:alpine directly from Docker Hub. Verify actual resolution in the next step. Dockerfiles, CI agents and Kubernetes can consume images via a unified registry endpoint, enabling shared caching and centralized permissions. Virtual repository creation does not enforce blocking direct Docker Hub access; separate network or organizational controls are required. Security scanning depends on entitlement and configuration.
+
+## Step 3 verification
+User confirmed creation of docker-virtual.
+
+## Step 4 — Pull external image (pending verification)
+```powershell
+docker pull trialgccoro.jfrog.io/docker-virtual/nginx:alpine
+```
+If authentication is required, reuse the existing configured credentials:
+```powershell
+$env:JFROG_TOKEN | docker login trialgccoro.jfrog.io --username $env:JFROG_USER --password-stdin
+```
+The virtual repository resolves the image through its members; the remote repository checks its cache and retrieves missing content from Docker Hub. Unlike direct Docker Hub pulls, this provides a centralized access point and shared server-side caching. Use cases include Dockerfile base images, CI agents and Kubernetes workloads. Production deployments should pin approved image digests rather than relying solely on mutable tags. Pull success and server-side cache inspection are pending.
