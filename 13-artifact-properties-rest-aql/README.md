@@ -83,3 +83,22 @@ User confirmed enabling Annotate on the existing permission target. Retry `jf rt
 
 ## Step 9 — Verify persisted metadata
 User requested next step without providing Step 8 execution output. Mutation success remains unverified. Run `jf rt curl -XGET "/api/storage/generic-dev-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial`. Expect release.status=[testing] and the other four original properties unchanged. Verify persisted state before claiming permission remediation succeeded. Read-after-write verification is an enterprise automation best practice. Actual result pending.
+
+## Steps 8 and 9 — Verified results
+After enabling Annotate, user supplied two successful jf rt sp executions, each with success=1 and failure=0. Original AQL query for pending returned total=0, as expected after status change. Storage API confirmed release.status=[testing] and all four other properties unchanged. Repository-scoped permission remediation succeeded without admin credentials. This demonstrates read-after-write verification and metadata-driven discovery. Repeated setting of the same value left the observed metadata unchanged.
+
+## Step 10 — Dynamic AQL filtering using PowerShell
+```powershell
+$releaseStatus = "testing"
+$query = @"
+items.find({
+    "repo": "generic-dev-local",
+    "name": "release-notes.txt",
+    "@environment": "dev",
+    "@release.status": "$releaseStatus"
+}).include("repo", "path", "name", "property")
+"@
+$query | Set-Content -Path dynamic-search.aql -Encoding ascii
+jf rt curl -XPOST "/api/search/aql" -H "Content-Type: text/plain" --data-binary "@dynamic-search.aql" --server-id=jfrog-trial
+```
+PowerShell expandable here-string substitutes the trusted releaseStatus variable; Set-Content generates a query file using ASCII for this ASCII-only content. AQL syntax is standard, values and filename are project-defined. Expected one matching artifact in testing status; actual execution pending. CI/CD can reuse query logic with validated pipeline parameters. Validate external input before query interpolation. Interview question: Why did the original AQL query return zero after successful update? The stored metadata no longer matched the pending filter, not a search failure. Metadata is not independent security approval; Phase 12 enforcement limitation remains outstanding.
