@@ -66,3 +66,6 @@ After retaining `enterprise-demo-build` and adding `enterprise-demo-build/**` as
 
 ## Step 5 — Dashboard verification (pending)
 Open the returned UI URL or navigate to Platform > Artifactory > Builds > enterprise-demo-build > 1. Inspect published modules and release-notes-1.0.1.txt artifact association. Dependencies, environment and Git information may be empty because this generic upload did not explicitly collect them. The URL identifies artifactory-build-info, the default Build Info repository; actual release content resides separately in generic-dev-local. Dashboard inspection pending.
+
+## Phase completion
+User confirmed dashboard and artifact association verification. Basic Build Info publication phase complete; richer dependency and Git metadata collection remains for pipeline integration.
