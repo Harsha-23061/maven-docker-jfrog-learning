@@ -61,3 +61,12 @@ Actual CLI ping returned HTTP 401, `Props Authentication Token not found`. Serve
 
 ## Authentication diagnostic result
 User reported HTTP 200 from the independent Basic authentication test. This supports validity of the existing credentials and repository read access, narrowing the issue to CLI configuration or authentication method. Reconfigure the existing alias using `jf config edit jfrog-trial --url="https://trialgccoro.jfrog.io" --user="$env:JFROG_USER" --access-token="$env:JFROG_TOKEN" --interactive=false` and retry `jf rt ping --server-id=jfrog-trial`. This eliminates manual token entry errors; if 401 persists, investigate reference-token authentication method compatibility. Avoid logging credentials; command-line arguments can be visible to local process inspection. CLI resolution pending.
+
+## CLI authentication resolution
+User confirmed completion after editing the existing configuration with verified environment credentials and retrying ping. Exact ping output was not supplied. No new token or permission changes reported.
+
+## Step 6 — Artifact search (pending)
+```powershell
+jf rt search "libs-release-local/**/*.jar" --server-id=jfrog-trial
+```
+Search is read-only. `jf rt search` is standard CLI syntax, libs-release-local is our existing Maven repository, the wildcard pattern selects nested JAR files, and jfrog-trial is our local alias. Expected JSON includes matching paths and artifact metadata such as size, timestamps and checksums. Enterprise use cases include release discovery, deployment validation, inventory and retention reviews. Search output can be consumed by scripts and CI/CD. Actual result pending.
