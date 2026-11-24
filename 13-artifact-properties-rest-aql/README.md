@@ -60,3 +60,14 @@ User confirmed saving the query file. From the directory containing search-artif
 jf rt curl -XPOST "/api/search/aql" -H "Content-Type: text/plain" --data-binary "@search-artifacts.aql" --server-id=jfrog-trial
 ```
 POST submits a read-only AQL search. /api/search/aql is the Artifactory endpoint, text/plain is the query content type, and --data-binary @filename reads the local query file. Existing CLI credentials are reused. Expected result includes generic-dev-local/releases/1.0.0/release-notes.txt and requested properties, plus range information. Additional matches are possible. Actual execution pending. Enterprise use: discover release candidates automatically before independent approval and security checks. No repository or permission changes planned.
+
+## Step 5 result — AQL verified
+Actual response returned one item (range start_pos=0, end_pos=1, total=1, limit=500000): generic-dev-local/releases/1.0.0/release-notes.txt, with all five expected properties. AQL property results use key/value objects, unlike the Storage API properties map. Existing deployment credentials successfully performed the read-only search.
+
+## Step 6 — Automate property updates with JFrog CLI
+```powershell
+jf rt sp "generic-dev-local/releases/1.0.0/release-notes.txt" "release.status=testing" --server-id=jfrog-trial
+```
+The standard CLI sp (set-properties) command targets the existing artifact and attempts to change release.status from pending to testing. Other properties should remain intact; verify actual state after execution. Annotate permission is required; current deployment-user permission is not assumed. If forbidden, inspect the relevant permission target rather than grant broad access. Custom lifecycle example: pending > testing > validated > approved > released. These labels do not execute tests, establish approval or physically promote artifacts. Phase 12 security enforcement remains unresolved. Execution pending.
+
+Interview question: What permission is needed to modify artifact properties? Annotate permission on the target artifact, scoped to the appropriate repository/path.
