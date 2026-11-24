@@ -37,3 +37,20 @@ User confirmed creation of generic-qa-promote as instructed. Effective access wi
 jf rt cp "generic-dev-local/releases/1.0.0/release-notes.txt" "generic-qa-local/releases/1.0.0/" --flat=true --server-id=jfrog-trial
 ```
 Standard CLI cp performs server-side copy, preserving DEV source. Explicit destination folder and flat=true avoid recreating source hierarchy. Reuse configured deployment identity and server alias. Source Read and destination Deploy/Cache are required. Expected success=1, failure=0; actual result pending. Verify destination and checksums subsequently. Copy rather than move preserves source for traceability and independent testing. This is simulated promotion, not QA validation or security approval.
+
+## Step 4 result
+User confirmed completion of DEV-to-QA copy; raw CLI output not supplied. Destination and integrity verification pending.
+
+## Step 5 — SHA-256 integrity verification
+```powershell
+$dev = jf rt curl -XGET "/api/storage/generic-dev-local/releases/1.0.0/release-notes.txt" --server-id=jfrog-trial | ConvertFrom-Json
+$qa = jf rt curl -XGET "/api/storage/generic-qa-local/releases/1.0.0/release-notes.txt" --server-id=jfrog-trial | ConvertFrom-Json
+Write-Host "DEV SHA256: $($dev.checksums.sha256)"
+Write-Host "QA  SHA256: $($qa.checksums.sha256)"
+if ($dev.checksums.sha256 -and $qa.checksums.sha256 -and ($dev.checksums.sha256 -eq $qa.checksums.sha256)) {
+    Write-Host "PASS: Artifact integrity verified" -ForegroundColor Green
+} else {
+    throw "FAIL: Artifact checksum missing or mismatched"
+}
+```
+Storage API returns file metadata including checksums. SHA-256 produces a 256-bit digest represented by 64 hexadecimal characters. Compare both nonempty digests to avoid passing on missing values. Expected matching checksums; actual result pending. Production automation should additionally validate API status and response schema. Matching checksums support build-once-deploy-many and content integrity but do not establish security clearance or release approval.
