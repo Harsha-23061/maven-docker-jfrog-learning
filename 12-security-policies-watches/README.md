@@ -79,3 +79,9 @@ Second CI attempt completed in 23 seconds. Image gate-45403921117-2 pushed succe
 
 ## Step 14 — Third CI attempt: scan results returned but CLI still running
 Screenshot for enterprise-docker-ci/45403921117-3 shows scan started at 13:38:50 and results returned at 13:38:56. Neither HTTP 403 nor indexing error appears. CLI reports no security, license compliance or operational risk violations and `Couldn't determine a package manager or build tool used by this project` under Vulnerable Dependencies. At screenshot time the job was still running after 9m34s (scan step 9m7s); final exit status unknown. Refresh Actions, allow another 2–3 minutes, cancel if still stuck. Existing job timeout is 30 minutes. Do not rerun or change permissions until investigated. Verify Docker artifact association, watch matching and scan results before claiming policy enforcement. Zero violations is not proof of zero vulnerabilities; prior image findings are not necessarily identical to this new build.
+
+## Step 15 — Successful workflow completion
+User confirmed third CI attempt finished successfully. Previous authorization and indexing errors no longer prevent completion. Exact final duration not supplied. Earlier scan output reported zero violations and package-manager detection warning. Successful workflow is not proof of policy-based rejection or absence of vulnerabilities.
+
+## Step 16 — Verify Docker Build Info coverage
+Navigate Platform > Artifactory > Builds > enterprise-docker-ci > 45403921117-3 > Published Modules (or Modules). Inspect Docker image and associated artifacts. Verify artifact association and policy scope before testing a blocking violation. No additional workflow run or permission change required yet. Phase 12 enforcement validation remains pending.
