@@ -10,3 +10,9 @@ User screenshots verified the New Policy wizard under Xray > Watches & Policies.
 
 ## Step 3 — Save policy (pending)
 Verify enterprise-security-policy (Security) and block-high-critical in the wizard. Leave Apply on Scope empty for now, advance if needed and Save Policy. Create a dedicated watch separately for docker-trial. Policy persistence and enforcement remain unverified.
+
+## Step 3 verification
+User confirmed saving enterprise-security-policy. Policy enforcement is not yet verified.
+
+## Step 4 — Create dedicated watch (pending)
+Navigate Platform > Xray > Watch Violations > Set up a Watch (observed UI route https://trialgccoro.jfrog.io/ui/watches). Name enterprise-docker-watch; description Monitor Docker images for high and critical security vulnerabilities; Enabled checked; recipients and Jira profile left empty. Manage Resources > By Resource > Add Repositories > docker-trial. Scope limited to internal Docker repository as a deliberate learning choice. Do not save until the policy is assigned. Repository watch supports violation evaluation; Fail Build enforcement requires applicable build coverage and CI scan integration, to be configured and tested separately. Watch creation pending.
