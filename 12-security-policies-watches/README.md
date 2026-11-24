@@ -121,3 +121,7 @@ Successful job screenshot confirms 46 seconds total and Xray build security gate
 
 ## Step 29 — Negative gate test did not reject build
 User confirmed temporarily changing minimum severity to Low, then reran workflow. Screenshot shows gate-45411263512-3, successful job in 43 seconds, Xray step in 18 seconds, visible Low findings including CVE-2026-105712 and CVE-2025-5278, and Security gate passed. Expected policy rejection did not occur. Policy persistence, build watch matching and blocking violation evaluation remain unverified. Inspect the beginning of the Xray step (Security Violations and scan command) before further changes. Restore High after controlled testing; temporary Low threshold is still in place per user report. Do not mark Phase 12 enforcement complete.
+
+## Scan evidence: policy enforcement still pending
+
+Build `enterprise-docker-ci/45411263512-3` completed `jf build-scan` with `--fail=true`. The supplied log reports no security, license or operational risk violations, yet lists one Critical and ten High CVEs affecting github.com/golang/go 1.27.3 in image `maven-docker-demo:gate-45411263512-3`, plus Medium and Low findings. This proves component detection, not policy enforcement. Do not promote this build on the basis of the green job. Next inspect the saved enabled watch's build resource scope and assigned policy, including rule conditions, Fail Build action and applicable ignore rules. Root cause remains unconfirmed; a policy-triggered rejection is required before closing this phase.
