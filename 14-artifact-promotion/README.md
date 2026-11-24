@@ -119,3 +119,9 @@ User confirmed validated metadata update; raw CLI output and persisted status no
 
 ## Step 11.1 — Inspect GitHub deployment environments
 Open repository Settings > Environments and check whether production already exists. Reuse existing configuration where possible. GitHub Actions environments can enforce deployment approval via required reviewers and branch restrictions where supported, and scope deployment secrets. Editable Artifactory properties alone are not approval enforcement. GitHub approval controls workflow execution, not direct Artifactory access; production credentials must be appropriately restricted. Environment configuration and reviewer availability remain unverified. Phase 12 security enforcement limitation remains unresolved, so this is a lab promotion, not actual production authorization.
+
+## Step 11.1 result
+User screenshot confirms no GitHub environments exist in this repository.
+
+## Step 11.2 — Create production environment
+Settings > Environments > New environment > name production > Configure environment. Name is project-defined. GitHub environment controls deployment workflow execution, whereas generic-prod-local stores artifacts. Creation alone does not enforce approval; protection rules must be configured and tested. Creation pending confirmation. Phase 12 security limitation remains unresolved.
