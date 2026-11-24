@@ -34,7 +34,7 @@ jobs:
           IMAGE="trialgccoro.jfrog.io/docker-trial/maven-docker-demo:gate-${BUILD_NUMBER}"
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$GITHUB_ENV"
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
-          docker build --file 04-docker-cicd/Dockerfile --tag "$IMAGE" 01-maven-docker-artifactory
+          docker build --provenance=false --sbom=false --file 04-docker-cicd/Dockerfile --tag "$IMAGE" 01-maven-docker-artifactory
       - name: Push image and collect Build Info
         run: jf docker push "$IMAGE" --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --skip-login=true --module="maven-docker-demo"
       - name: Publish Build Info
