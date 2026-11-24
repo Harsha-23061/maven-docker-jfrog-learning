@@ -221,3 +221,6 @@ PASS: PROD checksum matches verified QA artifact
 PASS: Simulated production promotion complete
 ```
 The workflow checked QA environment=qa and release.status=validated, pinned known SHA-256, verified destination absence (404), copied artifact using Artifactory server-side REST API, verified PROD checksum, updated PROD environment=prod and release.status=lab-released, and read back the properties. This is a verified lab release only; NOT evidence of Xray security approval, and actual production deployments must fail closed until Phase 12 issue is resolved. No rerun: destination now exists and the workflow intentionally rejects a second copy. Additional follow-up should demonstrate read-only verification, rollback and failure recovery without deleting/redeploying this existing artifact. Separate identity and environment approvals implemented; write/delete restrictions not explicitly negative-tested. 
+
+## Step 16 and phase closure
+User confirmed final PROD artifact and metadata inspection in Artifactory. Phase 14 lab promotion objectives completed. Exact final UI state is user-confirmed; earlier workflow read-back was directly verified. Xray enforcement remains unresolved, and write/delete negative tests, branch rejection and bypass tests remain outstanding. No real production authorization.
