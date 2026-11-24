@@ -40,3 +40,9 @@ User applied enterprise-docker-watch to existing content using Last 7 Days (18/1
 
 ## Step 7 — Inspect violations (pending)
 Navigate Platform > Xray > Watch Violations (visible in expanded sidebar). Inspect enterprise-docker-watch results, severity, affected artifacts and triggering policy rule. Record actual evidence before implementing the automated build gate.
+
+## Step 7 — Detailed violations verified
+Screenshot confirms 263 displayed violations for enterprise-docker-watch, with visible Critical Security rows affecting maven-docker-demo and exposures:latest. Visible component prefixes include github.com/golang, Thymeleaf, Jackson, Apache Logging, PyYAML 5.2 and libssl1.1. CVE IDs and several component versions are truncated; exact identifiers and remediation are unverified. Contextual Analysis is Locked. Repository-level scope explains inclusion of other images. Basic policy evaluation verified; CI gate not yet tested.
+
+## Step 8 — Automated build gate (pending)
+Target flow: GitHub Actions Docker build/push with Build Info collection and publication, applicable build watch coverage, Xray build scan, and pipeline failure on blocking violations. Earlier Docker workflow did not publish associated Build Info. First locate Add Builds by editing enterprise-docker-watch under Watches & Policies > Watches; retain repository and policy. Choose a narrowly scoped CI build name and matching permissions in subsequent configuration. Do not claim build blocking until actual test evidence is available.
