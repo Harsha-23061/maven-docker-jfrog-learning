@@ -49,3 +49,6 @@ Run `jf config add jfrog-trial` interactively. Use platform URL `https://trialgc
 
 ## Interactive service URL discovery
 After entering the platform URL, CLI 2.77.0 displayed automatically derived URLs for Artifactory (/artifactory/), Distribution (/distribution/), Xray (/xray/), Mission Control (/mc/) and Pipelines (/pipelines/). These correspond respectively to artifact management, release distribution, security scanning, centralized instance management and CI/CD automation. Select Save and continue to accept defaults. Derived URLs do not establish service availability or license entitlement. Authentication and connectivity verification remain pending.
+
+## Reference token warning
+CLI reported that it could not extract the access token payload, suggesting a reference token rather than a JWT. This warning alone does not establish authentication failure. JWTs contain encoded claims; reference tokens are opaque and cannot be decoded locally to infer a username. At the optional username prompt enter the existing `maven-deployer` username, useful for package managers requiring basic authentication. Reuse the existing token; verify connectivity after saving. Never record token values in Git.
