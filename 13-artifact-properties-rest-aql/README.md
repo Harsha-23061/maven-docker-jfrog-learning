@@ -53,3 +53,10 @@ items.find({
 All conditions must match. items.find(), @ property prefix and include() are standard AQL syntax; repository, filename and metadata are existing project values; query filename is chosen locally. Official reference: https://docs.jfrog.com/artifactory/docs/artifactory-query-language. Enterprise use: discover pending DEV artifacts before independent approval and security checks. Query creation and execution remain pending. Metadata is not security approval; Phase 12 enforcement limitation remains unresolved.
 
 Interview question: When would you choose AQL over the Storage API? Use AQL to discover items matching multiple conditions, and Storage API to retrieve metadata for a known item path.
+
+## Step 5 — Execute AQL through JFrog CLI
+User confirmed saving the query file. From the directory containing search-artifacts.aql, run:
+```powershell
+jf rt curl -XPOST "/api/search/aql" -H "Content-Type: text/plain" --data-binary "@search-artifacts.aql" --server-id=jfrog-trial
+```
+POST submits a read-only AQL search. /api/search/aql is the Artifactory endpoint, text/plain is the query content type, and --data-binary @filename reads the local query file. Existing CLI credentials are reused. Expected result includes generic-dev-local/releases/1.0.0/release-notes.txt and requested properties, plus range information. Additional matches are possible. Actual execution pending. Enterprise use: discover release candidates automatically before independent approval and security checks. No repository or permission changes planned.
