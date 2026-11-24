@@ -54,3 +54,6 @@ User screenshot shows Add Builds > By Pattern, include patterns enterprise-demo-
 
 ## Step 3 verification and Step 4 retry
 User confirmed saving the scoped build permission target. Effective authorization remains to be verified. Retry `jf rt build-publish "enterprise-demo-build" "1" --server-id=jfrog-trial` using the existing locally collected metadata and credentials. No artifact re-upload is needed unless local metadata is missing. HTTP 401 generally indicates authentication problems; HTTP 403 generally indicates authorization problems. Publication result pending.
+
+## Step 4 actual result — authorization remains unresolved
+On 2026-11-24 at 17:40:43, retry returned HTTP 403 `User is not authorized to access build info` (trace ID 08434c9a2ce30406). The scoped permission change did not resolve the error. Inspect saved enterprise-build-deploy Users settings for effective Build Read/Deploy assignment, then verify pattern matching and token scope if necessary. Do not broaden permissions or rotate credentials before isolating the cause. Publication remains pending.
