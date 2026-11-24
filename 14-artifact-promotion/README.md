@@ -164,3 +164,6 @@ User confirmed creation of production-promoter following pre-creation correction
 
 ## Step 14.2 — QA read-only permission
 Create permission target production-promoter-qa-read scoped only to generic-qa-local. Assign production-promoter Read only; leave Deploy/Cache, Annotate, Delete/Overwrite and Manage disabled. Preserve existing permission targets. This allows the promotion identity to consume QA artifacts without granting modification rights through this target. Intended design: maven-deployer DEV/QA read and write, production-promoter QA read and later narrowly scoped PROD deployment. Effective access, including inherited permissions, must be verified; no claim of enforced isolation yet. Names are project-defined. Creation pending confirmation. Phase 12 security limitation remains unresolved.
+
+## Step 14.2 — User membership verification
+Users list screenshot shows production-promoter with no listed group membership, while maven-deployer retains readers membership. Review inherited deployment-user permissions later without disrupting existing pipelines. QA read-only permission creation remains unverified; continue in Permissions rather than Users.
