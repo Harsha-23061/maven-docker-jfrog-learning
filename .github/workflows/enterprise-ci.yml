@@ -48,6 +48,29 @@ jobs:
           docker run --rm "$IMAGE" > /tmp/actual-output.txt
           diff -u /tmp/expected-output.txt /tmp/actual-output.txt
           echo "PASS: Container smoke test"
+      - name: Publish and verify tested Maven artifact
+        if: github.ref == 'refs/heads/main'
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          BASE="https://trialgccoro.jfrog.io/artifactory/libs-release-local"
+          ARTIFACT="com/example/maven-docker-artifactory/$VERSION/maven-docker-artifactory-$VERSION"
+          (cd staging && sha256sum -c app.jar.sha256)
+          mvn -B -ntp -s 01-maven-docker-artifactory/.mvn/settings.xml.example org.apache.maven.plugins:maven-deploy-plugin:3.1.3:deploy-file \
+            "-Dfile=staging/app.jar" "-DpomFile=staging/pom.xml" \
+            "-DrepositoryId=artifactory-release" "-Durl=$BASE" -DgeneratePom=false
+          curl --fail --silent --show-error --max-time 60 --user "$JFROG_USER:$JFROG_TOKEN" "$BASE/$ARTIFACT.jar" -o /tmp/jfrog-app.jar
+          curl --fail --silent --show-error --max-time 60 --user "$JFROG_USER:$JFROG_TOKEN" "$BASE/$ARTIFACT.pom" -o /tmp/jfrog-app.pom
+          cmp staging/app.jar /tmp/jfrog-app.jar
+          cmp staging/pom.xml /tmp/jfrog-app.pom
+          echo "PASS: Published Maven JAR and POM match staged files"
+          echo "JFrog JAR SHA-256: $(sha256sum /tmp/jfrog-app.jar | cut -d ' ' -f 1)"
+          echo "Published Maven version: $VERSION"
       - name: Retain tested Maven artifact and evidence
         uses: actions/upload-artifact@v4
         with:
