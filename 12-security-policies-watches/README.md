@@ -22,3 +22,9 @@ User confirmed adding docker-trial to the watch configuration.
 
 ## Step 5 — Assign policy and create watch (pending)
 Under Assigned Policies select Manage Policies, choose enterprise-security-policy and confirm. Verify enterprise-docker-watch is enabled, scoped to docker-trial and assigned the security policy containing block-high-critical (minimum severity High, Generate violation and Fail Build enabled, Block download disabled). Click Create. Actual watch persistence, historical artifact evaluation, violations and CI/CD build failure are not yet verified. Repository coverage alone does not establish build gating; applicable build coverage and CI scan integration will be tested separately.
+
+## Step 5 verification
+Screenshot showed one repository selected, enterprise-security-policy assigned (Security), and Create available. User subsequently confirmed creation. Repository name was collapsed in screenshot; docker-trial selection is based on earlier user confirmation.
+
+## Step 6 — Evaluate existing content (pending)
+Locate enterprise-docker-watch in Xray > Watches & Policies > Watches. Use Apply on Existing Content (action placement may vary). If prompted for dates, include November 20, 2026, the existing Docker image creation date shown in Artifactory. Existing findings: 52 security issues including one Critical; previously no reported violations. Expect applicable High/Critical findings to generate violations after asynchronous evaluation. Actual counts and build failure remain unverified. No rebuild or re-upload required for this evaluation.
