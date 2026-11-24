@@ -63,3 +63,12 @@ User supplied Storage API results for both repositories. Both SHA-256 values wer
 jf rt curl -XGET "/api/storage/generic-qa-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial
 ```
 Inspect whether the five source properties were preserved: application=enterprise-demo, environment=dev, release.status=testing, release.version=1.0.0, team=platform-engineering. These are expected values, not yet verified for QA. Repository location and custom lifecycle metadata are independent; verify before updating. Actual result pending.
+
+## Step 6 result — Metadata preservation verified
+User supplied QA Storage API JSON confirming all five properties copied unchanged: application=enterprise-demo, environment=dev, release.status=testing, release.version=1.0.0, team=platform-engineering. Repository location does not automatically change custom lifecycle metadata.
+
+## Step 7 — Update QA lifecycle metadata
+```powershell
+jf rt sp "generic-qa-local/releases/1.0.0/release-notes.txt" "environment=qa;release.status=qa-pending" --server-id=jfrog-trial
+```
+Semicolon separates property assignments in the CLI argument. Update only QA metadata; DEV should retain environment=dev and release.status=testing. Other three properties should remain unchanged. The custom status qa-pending is chosen for this lab to represent awaiting QA validation, not a built-in JFrog state. Planned lifecycle: DEV testing > QA qa-pending > QA validated after tests > PROD released after required approvals and promotion. Actual mutation and isolation verification pending. Phase 12 security enforcement limitation remains unresolved.
