@@ -149,3 +149,6 @@ Successful GET /api/v2/watches/enterprise-docker-watch confirms active=true, all
 
 ## Step 37 — Empty policy API response
 User ran GET /api/v2/policies/enterprise-security-policy and received no visible output. This does not establish policy absence or permission failure. Repeat with `jf xr curl -i -XGET "/api/v2/policies/enterprise-security-policy" --server-id=jfrog-trial` to inspect HTTP status and headers. Redact sensitive headers before sharing. Endpoint compatibility and policy enforcement remain unverified. No configuration changes or reruns requested.
+
+## Step 38 — Policy API access denied
+GET /api/v2/policies/enterprise-security-policy with response headers returned HTTP 403 Forbidden, Content-Length 0, 24 Nov 2026 14:56:35 GMT. Watch GET previously succeeded. This confirms denial of the policy API request, not the cause of missing build violations. Inspect existing Xray-related permission target under Administration > User Management > Permissions and its maven-deployer user permissions without modifying them. Do not grant administrator or policy management access merely to troubleshoot a scan. Separate security administration from CI deployment identities. Policy enforcement remains unresolved; temporary Low threshold must be restored after testing.
