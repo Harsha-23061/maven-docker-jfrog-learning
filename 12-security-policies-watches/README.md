@@ -167,3 +167,9 @@ Generate Token form verified. Proposed settings: Scoped Token, description tempo
 
 ## Step 40 — Configure separate administrator CLI profile
 User confirmed generating the temporary token. Run `jf config add jfrog-admin-diagnostic` interactively, enter platform URL https://trialgccoro.jfrog.io, temporary administrator token, and xray-admin-diagnostic username if requested. Keep jfrog-trial as default. Alias is locally chosen; both profiles target the same instance with different credentials. Never paste token into documentation or replace CI secrets. Profile configuration and authentication remain unverified. Remove temporary profile and revoke token after diagnostics. Policy enforcement remains unresolved.
+
+## Step 41 — Verify administrator CLI configuration
+Run `jf config show jfrog-admin-diagnostic`. User output verified the separate profile, expected platform URL, username `xray-admin-diagnostic`, masked access token and Default=false. Existing deployment profile was preserved. This verifies local configuration, not server authorization.
+
+## Step 42 — Compare policy API access using administrator credentials
+Run `jf xr curl -i -XGET "/api/v2/policies/enterprise-security-policy" --server-id=jfrog-admin-diagnostic`. Compare with the earlier HTTP 403 from maven-deployer. HTTP 200 permits inspection of policy criteria and actions; HTTP 403 requires further authorization diagnosis; HTTP 404 requires checking endpoint and policy name. Result pending. Do not replace CI credentials with admin token. Revoke temporary token and remove profile after diagnostics.
