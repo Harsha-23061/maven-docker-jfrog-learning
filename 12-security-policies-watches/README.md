@@ -46,3 +46,6 @@ Screenshot confirms 263 displayed violations for enterprise-docker-watch, with v
 
 ## Step 8 — Automated build gate (pending)
 Target flow: GitHub Actions Docker build/push with Build Info collection and publication, applicable build watch coverage, Xray build scan, and pipeline failure on blocking violations. Earlier Docker workflow did not publish associated Build Info. First locate Add Builds by editing enterprise-docker-watch under Watches & Policies > Watches; retain repository and policy. Choose a narrowly scoped CI build name and matching permissions in subsequent configuration. Do not claim build blocking until actual test evidence is available.
+
+## Step 8 — Policy verification and navigation correction
+Screenshots of the existing policy editor verify block-high-critical, CVEs, minimum severity High, Generate violation and Fail Build actions, and enterprise-docker-watch under Apply on Scope. The policy editor explicitly states the watch list cannot be edited there. No policy changes required. Cancel, select Watches, edit enterprise-docker-watch via its action menu, and locate Manage Resources > Add Builds. Build coverage and pipeline enforcement remain pending.
