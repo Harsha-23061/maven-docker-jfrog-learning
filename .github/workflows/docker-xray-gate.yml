@@ -18,6 +18,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
       - name: Configure JFrog CLI
         env:
           JFROG_USER: ${{ secrets.JFROG_USER }}
@@ -34,9 +36,16 @@ jobs:
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
           docker build --file 04-docker-cicd/Dockerfile --tag "$IMAGE" 01-maven-docker-artifactory
       - name: Push image and collect Build Info
-        run: jf docker push "$IMAGE" --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --skip-login=true
+        run: jf docker push "$IMAGE" --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --skip-login=true --module="maven-docker-demo"
       - name: Publish Build Info
         run: jf rt build-publish "$BUILD_NAME" "$BUILD_NUMBER" --server-id=jfrog-trial
+      - name: Validate published Docker Build Info
+        run: |
+          jf rt curl -XGET "/api/build/$BUILD_NAME/$BUILD_NUMBER" --server-id=jfrog-trial > build-info.json
+          jq -e 'any(.buildInfo.modules[]?; .type == "docker" and ((.artifacts // []) | length > 0))' build-info.json || {
+            echo "::error::Published Build Info has no Docker module with artifacts. Refusing security pass."
+            exit 1
+          }
       - name: Xray build security gate
         run: jf build-scan "$BUILD_NAME" "$BUILD_NUMBER" --server-id=jfrog-trial --fail=true
       - name: Security gate passed
