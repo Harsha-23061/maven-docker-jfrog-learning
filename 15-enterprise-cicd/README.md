@@ -8,3 +8,6 @@ Build/test versioned JAR once, publish same JAR and package into Docker image, c
 
 ## Next step
 Inspect existing Maven project POM, source/tests and Dockerfile before choosing implementation. No user-side changes required.
+
+## Step 2 — Application and Dockerfile assessment
+Directly inspected 01-maven-docker-artifactory/pom.xml (com.example:maven-docker-artifactory:1.0.6, Java 17, distributionManagement artifactory-release to libs-release-local), Main.java (reconstructed console example prints welcome and numbers 1–5), .mvn/settings.xml.example (environment-based credentials matching repository ID), and 04-docker-cicd/Dockerfile (multi-stage Maven package then Java 17 JRE). Expected src/test/java/com/example/MainTest.java returned 404; POM declares no test framework. This does not prove every possible test file is absent, but existing test execution is not established. Proposed next step: introduce JUnit tests and explicit test execution, preserve application output and old Dockerfile, then build once and package same verified JAR in a separate runtime-only Dockerfile. GitHub POM version differs from previously deployed local 1.0.7; use repository source and unique CI version. No source or workflow changes made in this assessment.
