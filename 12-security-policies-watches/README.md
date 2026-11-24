@@ -164,3 +164,6 @@ GET /api/v2/policies/enterprise-security-policy with headers returned HTTP 403 F
 
 ## Step 39 — Temporary administrator token configuration
 Generate Token form verified. Proposed settings: Scoped Token, description temporary-xray-policy-diagnostic, Admin scope, subject xray-admin-diagnostic, All services, Custom expiry 1 hour, reference token unchecked. These are chosen diagnostic settings, not existing deployment credentials. Admin scope is broad; use only for local read-only diagnostics, never in CI or GitHub documentation, and revoke after use. Generation and acceptance of the proposed subject remain pending user confirmation. Do not replace existing JFROG_TOKEN or jfrog-trial profile.
+
+## Step 40 — Configure separate administrator CLI profile
+User confirmed generating the temporary token. Run `jf config add jfrog-admin-diagnostic` interactively, enter platform URL https://trialgccoro.jfrog.io, temporary administrator token, and xray-admin-diagnostic username if requested. Keep jfrog-trial as default. Alias is locally chosen; both profiles target the same instance with different credentials. Never paste token into documentation or replace CI secrets. Profile configuration and authentication remain unverified. Remove temporary profile and revoke token after diagnostics. Policy enforcement remains unresolved.
