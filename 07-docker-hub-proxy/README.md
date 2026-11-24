@@ -46,3 +46,8 @@ docker info
 docker pull trialgccoro.jfrog.io/docker-virtual/nginx:alpine
 ```
 Verify server information in docker info. Do not rotate tokens or change repository permissions based solely on this error. Resolution and pull verification pending.
+
+## Why proxy Docker Hub instead of pulling directly?
+Direct `docker pull nginx:alpine` is valid and often sufficient for personal projects. Enterprises use Artifactory as a shared proxy/cache, unified internal/external registry endpoint, centralized authorization and audit layer, and integration point for configured Xray security policies. For example, hundreds of developers and CI agents can reuse cached image content, reducing repeated upstream traffic and exposure to rate limits. Cached availability during outages depends on content and configuration; a proxy alone does not guarantee security or block direct internet access.
+
+Dockerfile example: `FROM trialgccoro.jfrog.io/docker-virtual/eclipse-temurin:17-jre` instead of `FROM eclipse-temurin:17-jre`. Kubernetes image example: `trialgccoro.jfrog.io/docker-virtual/nginx:alpine` with appropriate registry authentication. Production should pin approved digests. JFrog is not mandatory for Docker; its value is organizational governance, security integration, reliability and scale. Interview question: Why use Artifactory when Docker Hub is available? Explain the shared proxy, access controls, unified endpoint and security policy integration.
