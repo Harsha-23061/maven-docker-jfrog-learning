@@ -80,3 +80,6 @@ Administration > User Management > Permissions > generic-artifact-deploy. Verify
 
 ## Step 8 — Retry property mutation after permission change
 User confirmed enabling Annotate on the existing permission target. Retry `jf rt sp "generic-dev-local/releases/1.0.0/release-notes.txt" "release.status=testing" --server-id=jfrog-trial`. Expected one successful item and zero failures. Same artifact, command, user and token; only intended change is repository-scoped Annotate permission. Actual result pending. Verify stored property values after success; do not infer release approval from metadata.
+
+## Step 9 — Verify persisted metadata
+User requested next step without providing Step 8 execution output. Mutation success remains unverified. Run `jf rt curl -XGET "/api/storage/generic-dev-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial`. Expect release.status=[testing] and the other four original properties unchanged. Verify persisted state before claiming permission remediation succeeded. Read-after-write verification is an enterprise automation best practice. Actual result pending.
