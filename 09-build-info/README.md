@@ -51,3 +51,6 @@ As administrator, navigate to Administration > User Management > Permissions and
 
 ### Build permission UI verification
 User screenshot shows Add Builds > By Pattern, include patterns enterprise-demo-build and **, and preview zero builds. Remove ** to avoid granting access to all builds; keep only enterprise-demo-build, leave Include All Builds unchecked and exclusions empty. Zero preview is consistent with the failed initial publication; pattern-based permissions can cover future builds. Click OK, assign existing maven-deployer Read and Deploy build permissions and save. Effective permission verification pending.
+
+## Step 3 verification and Step 4 retry
+User confirmed saving the scoped build permission target. Effective authorization remains to be verified. Retry `jf rt build-publish "enterprise-demo-build" "1" --server-id=jfrog-trial` using the existing locally collected metadata and credentials. No artifact re-upload is needed unless local metadata is missing. HTTP 401 generally indicates authentication problems; HTTP 403 generally indicates authorization problems. Publication result pending.
