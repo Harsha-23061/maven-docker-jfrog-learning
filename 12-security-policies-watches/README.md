@@ -85,3 +85,6 @@ User confirmed third CI attempt finished successfully. Previous authorization an
 
 ## Step 16 — Verify Docker Build Info coverage
 Navigate Platform > Artifactory > Builds > enterprise-docker-ci > 45403921117-3 > Published Modules (or Modules). Inspect Docker image and associated artifacts. Verify artifact association and policy scope before testing a blocking violation. No additional workflow run or permission change required yet. Phase 12 enforcement validation remains pending.
+
+## Steps 17–18 — Xray UI verification
+Scans List > Builds screenshot shows enterprise-docker-ci in artifactory-build-info with one indexed version, latest 45403921117-3. Build Overview subsequently displays All clear! No vulnerabilities found, consistent with successful CI execution. This is a reported result, not proof of complete Docker component coverage. Next select Build Versions and open 45403921117-3 to inspect components/dependencies. No configuration changes or reruns required. Policy-based rejection remains unverified.
