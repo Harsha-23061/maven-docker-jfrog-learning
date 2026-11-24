@@ -27,3 +27,12 @@ User confirmed opening the Properties tab in Step 1. Add properties to generic-d
 | team | platform-engineering | Ownership |
 
 These are project-defined naming conventions, not mandatory JFrog keys. Workflow: upload artifact, attach metadata, search with AQL, validate approvals and security, promote DEV to QA to PROD. Metadata does not move binaries or establish approval. Phase 12 enforcement limitation remains outstanding. Property creation pending confirmation. If editing is unavailable, inspect Annotate permissions before changing access.
+
+## Step 3 — Retrieve properties using REST API
+Step 2: screenshot verified environment=dev; user subsequently confirmed adding all five properties. Keep Add Recursively unchecked for individual file. Verify programmatically using PowerShell:
+```powershell
+jf rt curl -XGET "/api/storage/generic-dev-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial
+```
+GET is read-only; /api/storage/ and ?properties are standard Artifactory API syntax; repository, path and server ID are existing project configuration. Expected properties object contains application=[enterprise-demo], environment=[dev], release.version=[1.0.0], release.status=[pending], team=[platform-engineering]. Values are arrays because properties may be multi-valued. Additional response fields may appear. Actual API response pending. Existing deployment profile is reused; no new credentials or permission changes planned. Official reference: https://docs.jfrog.com/artifactory/reference. Enterprise use: Jenkins/GitHub Actions retrieve metadata for automated release eligibility checks; metadata is not independent security approval.
+
+Interview question: Why use REST APIs rather than UI? APIs provide repeatable, authenticated machine-to-machine operations suitable for CI/CD automation.
