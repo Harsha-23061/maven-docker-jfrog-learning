@@ -55,3 +55,6 @@ CLI reported that it could not extract the access token payload, suggesting a re
 
 ## Step 4 — Connectivity verification (pending)
 User entered the existing username and returned to PowerShell without a reported configuration error. Run `jf rt ping --server-id=jfrog-trial`. The rt group targets Artifactory, ping checks connectivity using the saved configuration, and server-id selects our custom alias. The underlying Artifactory endpoint is GET /artifactory/api/system/ping; expected response OK. CI/CD can use this as a connectivity preflight. A successful ping does not establish repository authorization or prove token validity where anonymous ping is allowed; verify repository access separately. Actual ping result pending.
+
+## Connectivity troubleshooting — HTTP 401
+Actual CLI ping returned HTTP 401, `Props Authentication Token not found`. Server responded but authentication failed; repository authorization remains untested. Possible causes include incorrect or expired token or saved configuration issues. Check existing PowerShell username and token presence without printing token. Independently test the existing credentials against `/artifactory/api/storage/libs-release-local` using Basic authentication; compare HTTP status with CLI ping. Avoid rotating credentials or changing permissions before isolating the issue. Resolution pending.
