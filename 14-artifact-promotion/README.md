@@ -158,3 +158,9 @@ Create non-admin JFrog user production-promoter under Administration > User Mana
 
 ## Step 14.1 — Pre-creation review
 Screenshot shows non-admin user creation form, password validation warning, and selected readers group with inherited Anything permission target. Correct password confirmation and remove readers membership before creating the user to minimize inherited repository access. Effective permissions must still be verified after creation. No credentials or email recorded. User creation pending.
+
+## Step 14.1 result
+User confirmed creation of production-promoter following pre-creation corrections. Effective inherited permissions not independently verified.
+
+## Step 14.2 — QA read-only permission
+Create permission target production-promoter-qa-read scoped only to generic-qa-local. Assign production-promoter Read only; leave Deploy/Cache, Annotate, Delete/Overwrite and Manage disabled. Preserve existing permission targets. This allows the promotion identity to consume QA artifacts without granting modification rights through this target. Intended design: maven-deployer DEV/QA read and write, production-promoter QA read and later narrowly scoped PROD deployment. Effective access, including inherited permissions, must be verified; no claim of enforced isolation yet. Names are project-defined. Creation pending confirmation. Phase 12 security limitation remains unresolved.
