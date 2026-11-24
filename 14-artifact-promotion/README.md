@@ -54,3 +54,12 @@ if ($dev.checksums.sha256 -and $qa.checksums.sha256 -and ($dev.checksums.sha256 
 }
 ```
 Storage API returns file metadata including checksums. SHA-256 produces a 256-bit digest represented by 64 hexadecimal characters. Compare both nonempty digests to avoid passing on missing values. Expected matching checksums; actual result pending. Production automation should additionally validate API status and response schema. Matching checksums support build-once-deploy-many and content integrity but do not establish security clearance or release approval.
+
+## Step 5 result — Verified DEV-to-QA integrity
+User supplied Storage API results for both repositories. Both SHA-256 values were `78fd4f447e2f32dad67eda0986145d0f9165836decd3e6ecf482428cf8c887d1`. Script printed PASS: Artifact integrity verified. Both source and destination exist and content hashes match; no rebuild was performed. This verifies repository-level promotion integrity, not QA or security approval.
+
+## Step 6 — Verify copied metadata
+```powershell
+jf rt curl -XGET "/api/storage/generic-qa-local/releases/1.0.0/release-notes.txt?properties" --server-id=jfrog-trial
+```
+Inspect whether the five source properties were preserved: application=enterprise-demo, environment=dev, release.status=testing, release.version=1.0.0, team=platform-engineering. These are expected values, not yet verified for QA. Repository location and custom lifecycle metadata are independent; verify before updating. Actual result pending.
