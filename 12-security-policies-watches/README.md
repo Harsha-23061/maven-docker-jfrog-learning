@@ -94,3 +94,6 @@ Screenshot of Xray Build Versions confirms 45403921117-3 reports 0 violations, 0
 
 ## Step 20 — Detailed Xray overview
 Screenshot of build 45403921117-3 confirms no reported malicious packages, vulnerabilities or policy violations. Exposures panel advertises Advanced Security features rather than displaying exposure findings. Component coverage is not established. Hover over puzzle-piece icon in inner navigation and inspect tooltip; open Components if identified. No configuration changes needed. Policy-triggered rejection remains unverified.
+
+## Step 21 — Empty SBOM diagnostic
+Screenshot for enterprise-docker-ci/45403921117-3 shows SBOM > Components List, empty search and No results were found. Zero reported vulnerabilities cannot establish image safety or effective gate coverage. Root cause is not established: incomplete artifact association or component indexing are hypotheses. Retrieve raw Build Info using PowerShell: `jf rt curl -XGET "/api/build/enterprise-docker-ci/45403921117-3" --server-id=jfrog-trial`. Inspect modules, artifacts and dependencies; redact any sensitive metadata before sharing. No configuration changes or reruns until evidence is inspected. Policy-triggered rejection remains pending.
