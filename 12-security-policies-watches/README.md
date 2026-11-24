@@ -52,3 +52,6 @@ Screenshots of the existing policy editor verify block-high-critical, CVEs, mini
 
 ## Step 8 — Build selection
 Screenshot verifies Configure Selected Builds offers Any Build, By Name and By Pattern; By Name displays zero available builds. Cause not established; indexing and permissions may require configuration. Choose By Pattern with planned exact CI build name enterprise-docker-ci, rather than all builds. This is a new custom name to be reused in CI Build Info publication. Pattern acceptance, indexing, permissions and actual gate enforcement remain pending. Preserve existing repository and policy coverage.
+
+## Step 8 — Build pattern entered
+Screenshot confirms By Pattern selected, enterprise-docker-ci added to Build Name Include Pattern, and no exclude patterns. Save By Pattern is visible; a red indicator is also visible near Select By, with cause unknown. Save By Pattern then Save the parent watch; inspect validation message if blocked. Persistence and actual build matching remain unverified. Retain docker-trial and enterprise-security-policy.
