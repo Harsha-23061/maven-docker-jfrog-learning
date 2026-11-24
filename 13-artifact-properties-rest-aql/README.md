@@ -120,3 +120,6 @@ foreach ($artifact in $data.results) {
 }
 ```
 Capture CLI response, check native exit status, join output lines, parse JSON, extract total and iterate results to construct artifact paths. Expected count=1 and path generic-dev-local/releases/1.0.0/release-notes.txt. Actual execution pending. Production scripts must also validate response schema and handle HTTP/API errors, pagination and independent security approval. This example discovers artifacts only, without promotion. Interview question: How can a CI/CD pipeline discover artifacts without hardcoding their full paths? Query AQL using metadata filters, parse JSON and iterate matching items.
+
+## Step 11 result and Phase 13 closure
+User output verified successful JSON parsing, Matching artifacts: 1, and Artifact: generic-dev-local/releases/1.0.0/release-notes.txt. Native exit-code check did not throw. Curl progress output was displayed separately and did not prevent JSON parsing. All Phase 13 learning objectives completed: custom properties, REST retrieval, AQL, Annotate permission remediation, automated mutation, dynamic filtering and programmatic discovery. Production-grade error/schema validation and pagination remain considerations. Phase 12 security enforcement remains unresolved.
