@@ -155,3 +155,6 @@ User confirmed workflow turned green after approval. Waiting state was screensho
 
 ## Step 14.1 — Dedicated production promotion identity
 Create non-admin JFrog user production-promoter under Administration > User Management > Users. Use a controlled email if required and a strong unique password; never publish credentials. No additional repository permissions yet. Keep existing maven-deployer DEV/QA scope unchanged. Plan narrowly scoped QA read and PROD deployment permissions and protected GitHub environment credentials in subsequent steps. Dedicated identity reduces exposure but does not by itself enforce separation of duties; effective group permissions must be checked. Phase 12 security gate remains unresolved; promotion is a lab exercise. Creation pending.
+
+## Step 14.1 — Pre-creation review
+Screenshot shows non-admin user creation form, password validation warning, and selected readers group with inherited Anything permission target. Correct password confirmation and remove readers membership before creating the user to minimize inherited repository access. Effective permissions must still be verified after creation. No credentials or email recorded. User creation pending.
