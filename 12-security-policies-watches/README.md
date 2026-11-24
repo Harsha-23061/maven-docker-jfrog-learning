@@ -137,3 +137,6 @@ User confirmed saving the corrected watch scope. Navigate Platform > Xray > Watc
 
 ## Step 33 — Re-evaluate existing content
 User reports no Ignore Rules. Navigate Platform > Xray > Watches & Policies > Watches > enterprise-docker-watch > three-dot menu > Apply on Existing Content > Last 7 Days > OK. Re-evaluate existing content after policy threshold and watch scope changes. This is a diagnostic, not a confirmed fix. Verify build-specific violations rather than relying on repository-wide counts. Negative gate test remains pending; restore High after controlled testing.
+
+## Step 34 — Verify build-specific violations after reevaluation
+User confirmed applying the watch to existing content. Navigate Platform > Xray > Scans List > Builds > enterprise-docker-ci > Build Versions > 45411263512-3 > Policy Violations. Inspect whether violations now appear for this specific build. Reevaluation completion and blocking enforcement are not yet verified. Do not rerun or change configuration until the result is inspected. Restore High after controlled testing.
