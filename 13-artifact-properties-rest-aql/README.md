@@ -102,3 +102,21 @@ $query | Set-Content -Path dynamic-search.aql -Encoding ascii
 jf rt curl -XPOST "/api/search/aql" -H "Content-Type: text/plain" --data-binary "@dynamic-search.aql" --server-id=jfrog-trial
 ```
 PowerShell expandable here-string substitutes the trusted releaseStatus variable; Set-Content generates a query file using ASCII for this ASCII-only content. AQL syntax is standard, values and filename are project-defined. Expected one matching artifact in testing status; actual execution pending. CI/CD can reuse query logic with validated pipeline parameters. Validate external input before query interpolation. Interview question: Why did the original AQL query return zero after successful update? The stored metadata no longer matched the pending filter, not a search failure. Metadata is not independent security approval; Phase 12 enforcement limitation remains outstanding.
+
+## Step 10 result — Dynamic AQL verified
+User output confirmed PowerShell variable testing was substituted into the query, dynamic-search.aql executed successfully, and exactly one matching artifact was returned with all five expected properties. Range total=1. No new permissions or credentials required.
+
+## Step 11 — Process AQL results programmatically
+```powershell
+$response = jf rt curl -XPOST "/api/search/aql" -H "Content-Type: text/plain" --data-binary "@dynamic-search.aql" --server-id=jfrog-trial
+if ($LASTEXITCODE -ne 0) {
+    throw "AQL request failed"
+}
+$data = ($response -join "`n") | ConvertFrom-Json
+Write-Host "Matching artifacts: $($data.range.total)"
+foreach ($artifact in $data.results) {
+    $artifactPath = "$($artifact.repo)/$($artifact.path)/$($artifact.name)"
+    Write-Host "Artifact: $artifactPath"
+}
+```
+Capture CLI response, check native exit status, join output lines, parse JSON, extract total and iterate results to construct artifact paths. Expected count=1 and path generic-dev-local/releases/1.0.0/release-notes.txt. Actual execution pending. Production scripts must also validate response schema and handle HTTP/API errors, pagination and independent security approval. This example discovers artifacts only, without promotion. Interview question: How can a CI/CD pipeline discover artifacts without hardcoding their full paths? Query AQL using metadata filters, parse JSON and iterate matching items.
