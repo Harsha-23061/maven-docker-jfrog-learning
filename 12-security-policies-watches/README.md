@@ -61,3 +61,9 @@ User confirmed Save By Pattern and parent watch Save. Actual matching of future 
 
 ## Step 9 — Build publishing permissions (pending)
 Reuse enterprise-build-deploy under Administration > User Management > Permissions. Retain existing enterprise-demo-build/** include pattern and add enterprise-docker-ci/** under Build Resources. Keep Include All Builds unchecked and exclusions empty. Retain maven-deployer Builds Read and Deploy only. This follows the successful Phase 09 pattern strategy; new build publishing remains unverified. Watch build-name pattern and permission resource pattern serve different purposes. Reuse existing CI credentials without exposing tokens or granting unrelated permissions.
+
+## Step 9 — Permissions saved
+User confirmed adding enterprise-docker-ci/** to existing build permissions. Actual authorization remains to be tested.
+
+## Step 10 — CI security gate implementation
+Created .github/workflows/docker-xray-gate.yml as a separate manually triggered workflow to preserve the working Phase 04 baseline. Reuses existing JFROG_USER and JFROG_TOKEN secrets, explicit CLI user/token configuration, Docker login via stdin, existing Dockerfile and repository. Uses enterprise-docker-ci and unique run ID/attempt for build number, gate- prefixed image tag, jf docker push to collect Build Info, jf rt build-publish, and jf build-scan --fail=true to gate subsequent steps. No deployment is performed. Workflow is committed but not yet executed; CLI compatibility, authentication, indexing, scan permissions and policy-triggered failure require runtime verification. A failed scan command alone is not proof of policy enforcement; inspect logs for actual blocking violations.
