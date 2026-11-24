@@ -113,3 +113,9 @@ Actual CLI download returned status success, success=1, failure=0. Exit-code che
 jf rt sp "generic-qa-local/releases/1.0.0/release-notes.txt" "release.status=validated" --server-id=jfrog-trial
 ```
 Record the successful defined content test on the QA repository entry only. Expected success=1, failure=0; execution pending. Validated means defined tests passed, whereas approved means release authorization was granted. Both are project-defined metadata values, not native approval controls. Production approval requires independent governance and security checks. Phase 12 enforcement limitation remains unresolved; subsequent PROD repository promotion is a lab simulation only.
+
+## Step 10 result
+User confirmed validated metadata update; raw CLI output and persisted status not independently verified.
+
+## Step 11.1 — Inspect GitHub deployment environments
+Open repository Settings > Environments and check whether production already exists. Reuse existing configuration where possible. GitHub Actions environments can enforce deployment approval via required reviewers and branch restrictions where supported, and scope deployment secrets. Editable Artifactory properties alone are not approval enforcement. GitHub approval controls workflow execution, not direct Artifactory access; production credentials must be appropriately restricted. Environment configuration and reviewer availability remain unverified. Phase 12 security enforcement limitation remains unresolved, so this is a lab promotion, not actual production authorization.
