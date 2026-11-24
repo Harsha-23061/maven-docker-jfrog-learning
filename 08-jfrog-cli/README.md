@@ -95,3 +95,13 @@ User confirmed creation of generic-dev-local.
 
 ## Step 9 — Generic repository permissions (pending)
 Create permission target generic-artifact-deploy (chosen name) for generic-dev-local and existing maven-deployer user. Grant Read and Deploy/Cache only; leave Delete/Overwrite, Annotate and Manage disabled. Reuse existing CLI configuration and token subject to token scope. Production may use separate service identities to isolate pipelines. Permission creation and upload verification pending.
+
+## Step 9 verification
+User confirmed Generic repository permission configuration; effective access will be tested by upload.
+
+## Step 10 — Generic artifact upload (pending)
+```powershell
+"Application release version 1.0.0" | Set-Content -Path release-notes.txt
+jf rt upload "release-notes.txt" "generic-dev-local/releases/1.0.0/" --flat=true --server-id=jfrog-trial
+```
+The source file and target subpath are chosen by us; generic-dev-local is the existing repository and jfrog-trial is the saved CLI alias. Flat mode avoids preserving source directory hierarchy. Expected summary: success 1, failure 0. Verify in Application > Artifactory > Artifacts > generic-dev-local > releases > 1.0.0 > release-notes.txt. Artifactory creates the necessary path during upload. Enterprise pipelines publish release notes, deployment packages and test reports; later Build Info can associate artifacts with builds and source metadata. Actual upload and UI verification pending.
