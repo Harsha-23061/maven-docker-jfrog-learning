@@ -179,3 +179,9 @@ User confirmed creation of production-promoter-prod-deploy. Effective permission
 
 ## Step 14.4 — Dedicated production access token
 Generate a user-scoped access token for production-promoter, description github-production-promotion, expiration seven days if available, Artifactory service if selectable, reference token unchecked. These are lab configuration choices; do not select admin scope. Store securely and never publish the token. Plan to use protected GitHub production environment secrets rather than repository-wide secrets. Token generation and authentication pending verification. Token scope and effective permissions must be tested. Phase 12 security enforcement remains unresolved.
+
+## Step 14.4 result
+User confirmed production token generation; actual scope, expiration and authentication not independently verified. No token value recorded.
+
+## Step 14.5 — Protected environment secrets
+GitHub repository Settings > Environments > production > Environment secrets > Add environment secret. Create JFROG_PROD_USER with value production-promoter and JFROG_PROD_TOKEN with the newly generated token. Names are project-defined. Preserve existing repository secrets JFROG_USER and JFROG_TOKEN used by existing workflows. Environment secrets become available to jobs referencing production after configured protection rules pass. This controls workflow credential access, not direct use of the token outside GitHub. Never commit or print credentials. Secret creation and authentication pending verification. Phase 12 security enforcement remains unresolved.
