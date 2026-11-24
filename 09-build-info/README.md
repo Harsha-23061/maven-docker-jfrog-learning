@@ -60,3 +60,9 @@ On 2026-11-24 at 17:40:43, retry returned HTTP 403 `User is not authorized to ac
 
 ## Build permission diagnostic — user assignment verified
 Screenshot confirms maven-deployer has Build Read and Deploy enabled, with other build privileges disabled. Next diagnostic: test scoped include pattern `enterprise-demo-build/**` instead of the exact name to check underlying build path matching. Keep unrestricted wildcard access disabled. Retry publication. Pattern hypothesis is not yet verified; token scope remains another possible cause.
+
+## Build publication — verified resolution (2026-11-24)
+After retaining `enterprise-demo-build` and adding `enterprise-demo-build/**` as scoped include patterns, the user retried publication. At 17:49:16 CLI reported `Build info successfully deployed.` The pattern change resolved the observed 403 without broad wildcard permissions, token rotation, administrator credentials in CLI or artifact re-upload. The exact internal matching mechanism was not independently inspected. Build: enterprise-demo-build/1. Returned UI URL: https://trialgccoro.jfrog.io/ui/builds/enterprise-demo-build/1/1795522753581/published?buildRepo=artifactory-build-info
+
+## Step 5 — Dashboard verification (pending)
+Open the returned UI URL or navigate to Platform > Artifactory > Builds > enterprise-demo-build > 1. Inspect published modules and release-notes-1.0.1.txt artifact association. Dependencies, environment and Git information may be empty because this generic upload did not explicitly collect them. The URL identifies artifactory-build-info, the default Build Info repository; actual release content resides separately in generic-dev-local. Dashboard inspection pending.
