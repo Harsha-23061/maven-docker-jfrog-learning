@@ -83,3 +83,9 @@ Source path is derived from existing Maven coordinates and repository. Destinati
 
 ## Alternative — download via Artifactory UI
 Navigate to Application > Artifactory > Artifacts > libs-release-local > com > example > maven-docker-artifactory > 1.0.7. Select maven-docker-artifactory-1.0.7.jar and use Download in the details panel or actions menu, depending on UI version. Browser download destination follows browser settings. UI is useful for manual inspection and occasional downloads; CLI supports repeatable, wildcard-based and automated transfers in Jenkins and GitHub Actions. Both retrieve the same stored artifact. User asked for the UI alternative; actual download verification remains pending.
+
+## Step 7 verification
+User confirmed artifact download completion; exact output and method were not supplied.
+
+## Step 8 — Generic artifact upload preparation (pending)
+Create a local Generic repository named `generic-dev-local` in Administration > Repositories > Local. The repository key is chosen by us: package type, environment, repository type. Generic repositories store arbitrary files such as ZIP archives, binaries, deployment scripts, reports and non-secret configuration templates without Maven-specific coordinates or metadata. Maven deploy remains appropriate for Maven packages; CLI upload is useful for generic files. Use a separate repository to avoid mixing package types. Next grant least-privilege read/deploy access to the existing deployment user before uploading a test file. Repository creation and upload not yet verified.
