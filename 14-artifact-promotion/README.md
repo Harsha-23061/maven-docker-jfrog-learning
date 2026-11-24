@@ -131,3 +131,9 @@ Screenshot confirms production environment created and Required reviewers option
 
 ## Step 11.3 — Configure manual approval
 Enable Required reviewers, select Harsha-23061, leave Prevent self-review unchecked for single-user lab, leave Wait timer disabled, uncheck Allow administrators to bypass configured protection rules, and save. Configuration pending confirmation. Required reviewers gate environment-referencing deployment jobs; disabling bypass does not prevent administrators from editing settings. Single-user self-approval demonstrates workflow mechanics but not independent separation of duties. Enterprise practice is independent reviewers and prevention of self-review. Approval enforcement must be tested with a workflow. Phase 12 security limitation remains unresolved.
+
+## Step 11.3 verification
+Screenshot shows intended reviewer Harsha-23061 selected, required reviewers enabled, self-review prevention and wait timer disabled, administrator bypass unchecked. Save protection rules before proceeding; persistence not yet verified.
+
+## Step 11.4 — Restrict deployment branches
+Under production environment Deployment branches and tags, select Selected branches and tags, add a Branch rule matching main, and save. Only main is intended to be eligible, subject to manual approval. Other branches and tags are not allowed by this rule. Environment branch eligibility is distinct from branch protection and does not restrict direct Artifactory access. Configuration and runtime enforcement pending verification.
