@@ -55,3 +55,9 @@ Screenshot verifies Configure Selected Builds offers Any Build, By Name and By P
 
 ## Step 8 — Build pattern entered
 Screenshot confirms By Pattern selected, enterprise-docker-ci added to Build Name Include Pattern, and no exclude patterns. Save By Pattern is visible; a red indicator is also visible near Select By, with cause unknown. Save By Pattern then Save the parent watch; inspect validation message if blocked. Persistence and actual build matching remain unverified. Retain docker-trial and enterprise-security-policy.
+
+## Step 8 — Watch save confirmed
+User confirmed Save By Pattern and parent watch Save. Actual matching of future builds remains untested.
+
+## Step 9 — Build publishing permissions (pending)
+Reuse enterprise-build-deploy under Administration > User Management > Permissions. Retain existing enterprise-demo-build/** include pattern and add enterprise-docker-ci/** under Build Resources. Keep Include All Builds unchecked and exclusions empty. Retain maven-deployer Builds Read and Deploy only. This follows the successful Phase 09 pattern strategy; new build publishing remains unverified. Watch build-name pattern and permission resource pattern serve different purposes. Reuse existing CI credentials without exposing tokens or granting unrelated permissions.
