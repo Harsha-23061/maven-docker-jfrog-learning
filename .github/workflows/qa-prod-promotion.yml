@@ -1,0 +1,43 @@
+name: QA to PROD Promotion Lab
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: generic-production-promotion
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      JFROG_USER: ${{ secrets.JFROG_PROD_USER }}
+      JFROG_TOKEN: ${{ secrets.JFROG_PROD_TOKEN }}
+      BASE: https://trialgccoro.jfrog.io/artifactory
+      SOURCE: generic-qa-local/releases/1.0.0/release-notes.txt
+      TARGET: generic-prod-local/releases/1.0.0/release-notes.txt
+      EXPECTED_SHA: 78fd4f447e2f32dad67eda0986145d0f9165836decd3e6ecf482428cf8c887d1
+    steps:
+      - name: Validate and promote lab artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          api() {
+            curl --silent --show-error --fail --max-time 60 --user "$JFROG_USER:$JFROG_TOKEN" "$@"
+          }
+          props=$(api "$BASE/api/storage/$SOURCE?properties")
+          jq -e '.properties["release.status"] == ["validated"] and .properties.environment == ["qa"]' <<< "$props" >/dev/null
+          sha=$(api "$BASE/api/storage/$SOURCE" | jq -er '.checksums.sha256')
+          test "$sha" = "$EXPECTED_SHA"
+          echo "PASS: QA status and expected checksum"
+          status=$(curl --silent --show-error --max-time 30 --user "$JFROG_USER:$JFROG_TOKEN" --output /dev/null --write-out '%{http_code}' "$BASE/api/storage/$TARGET")
+          test "$status" = 404 || { echo "Destination must be absent; HTTP $status"; exit 1; }
+          api -X POST "$BASE/api/copy/$SOURCE?to=/$TARGET" >/dev/null
+          actual=$(api "$BASE/api/storage/$TARGET" | jq -er '.checksums.sha256')
+          test "$actual" = "$EXPECTED_SHA"
+          echo "PASS: PROD checksum matches verified QA artifact"
+          api -X PUT "$BASE/api/storage/$TARGET?properties=environment%3Dprod%3Brelease.status%3Dlab-released" >/dev/null
+          api "$BASE/api/storage/$TARGET?properties" | jq -e '.properties.environment == ["prod"] and .properties["release.status"] == ["lab-released"]' >/dev/null
+          echo "PASS: Simulated production promotion complete"
