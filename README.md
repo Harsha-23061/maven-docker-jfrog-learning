@@ -27,7 +27,7 @@ Folder numbering reflects the historical exercises and does not always match the
 
 Phases 01–11 cover setup, local repositories, permissions, CI/CD, remote/virtual repositories, Maven resolution, Docker proxy, CLI, Build Info, environment strategy and Xray scanning. Core exercises have been performed; individual subtopics (including license scanning) should be audited before claiming complete coverage.
 
-Phase 12 is in progress: security policy and watch verified with 263 violations. CI Build Info publication succeeded; initial scan HTTP 403 no longer appears after permission correction. Latest blocker: enterprise-docker-ci is not selected for indexing. Next enable Xray build indexing and retest. Policy-triggered CI failure is not yet verified.
+Phase 12 is in progress: security policy and watch verified with 263 violations. Build indexing and scan authorization blockers resolved. Empty Docker Build Info prompted fail-closed validation and explicit Docker association; user reported green workflow after enabling repository Annotate permission. Final scan logs, component coverage and policy-triggered CI rejection remain to be verified.
 
 Remaining planned phases:
 13. Artifact properties, REST API and AQL
