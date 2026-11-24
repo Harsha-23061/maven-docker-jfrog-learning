@@ -73,3 +73,6 @@ Screenshot shows workflow failed after 38 seconds. Publish Build Info succeeded 
 
 ## Step 12 — Retest after permission correction
 User confirmed saving Manage Xray Metadata permission changes. Rerun all jobs on the previously failed Phase 12 Docker Xray Security Gate workflow. Existing workflow generates a distinct build number and image tag using run ID and attempt. No code or credential changes needed for this diagnostic. Verify scan authorization and distinguish policy-triggered failure from HTTP 403 or other operational errors. Actual correction and enforcement remain pending runtime evidence.
+
+## Step 13 — Build indexing diagnostic
+Second CI attempt completed in 23 seconds. Image gate-45403921117-2 pushed successfully and Publish Build Info succeeded. Xray scan at 13:34:49 returned `Build enterprise-docker-ci is not selected for indexing`, exit code 1. Previous HTTP 403 no longer reported, suggesting Manage Xray Metadata correction resolved that blocker. Security gate passed step skipped. Next locate Administration > Xray Settings > Indexed Resources > Builds (UI placement may vary), and enable indexing specifically for enterprise-docker-ci. Watch coverage and indexing are separate configuration requirements. No workflow or credential changes planned. Indexing and policy-triggered rejection remain unverified.
