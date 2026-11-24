@@ -131,3 +131,6 @@ Screenshot shows enterprise-security-policy, block-high-critical CVE rule, minim
 
 ## Step 31 — Watch build scope inspection
 User confirmed saving the policy. Watch screenshot shows By Resource, one repository, two included build patterns (enterprise-security-policy and enterprise-docker-ci), and assigned enterprise-security-policy. The first build pattern is unnecessary because it is a policy name. Edit Builds, remove only enterprise-security-policy from included build patterns, retain enterprise-docker-ci, verify exclusions are empty, Save By Pattern, then Save Watch. Retain assigned policy and repository. Extra inclusion is not established as the cause of missing violations. Correction pending user confirmation; negative gate test remains unresolved.
+
+## Step 32 — Inspect ignore rules
+User confirmed saving the corrected watch scope. Navigate Platform > Xray > Watches & Policies > Ignore Rules and inspect existing entries for applicable vulnerability exceptions. Do not create or delete rules. Ignore rules can suppress policy violations within their applicable scope. No evidence yet that an ignore rule caused the green build. Negative gate test remains pending; restore High after controlled testing.
