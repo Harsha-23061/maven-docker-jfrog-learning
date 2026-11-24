@@ -158,3 +158,6 @@ GET /api/v2/watches/enterprise-docker-watch returned active=true, all-builds res
 
 ## Step 37 — Policy REST authorization blocker
 GET /api/v2/policies/enterprise-security-policy with headers returned HTTP 403 Forbidden and empty body. Watch GET succeeded previously. This establishes refusal of this request, not the precise missing permission or cause of zero violations. Do not elevate maven-deployer to administrator. Inspect existing CLI profiles using `jf config show`; share only server IDs and usernames, not credentials or tokens. Consider separate administrator credentials for read-only policy diagnostics. Negative enforcement remains pending; restore High after controlled testing.
+
+## Step 38 — Separate administrative diagnostic credentials
+`jf config show` confirms only jfrog-trial, default=true, user maven-deployer. Preserve existing deployment profile and GitHub secrets. Open Administration > User Management > Access Tokens > Generate Token (or equivalent UI label). Stop at configuration form. Plan a separate short-lived administrator token for read-only policy diagnostics, revoke after use, and never store it in GitHub Actions or documentation. No token created yet. Policy API authorization and vulnerability-based rejection remain unresolved; restore High after controlled testing.
