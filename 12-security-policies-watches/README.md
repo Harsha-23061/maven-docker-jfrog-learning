@@ -91,3 +91,6 @@ Scans List > Builds screenshot shows enterprise-docker-ci in artifactory-build-i
 
 ## Step 19 — Build version scan summary
 Screenshot of Xray Build Versions confirms 45403921117-3 reports 0 violations, 0 vulnerabilities and malicious packages Not Found. Open the version number to inspect detailed component coverage. No new configuration or workflow run required. Complete Docker scan coverage and policy-triggered rejection remain unverified.
+
+## Step 20 — Detailed Xray overview
+Screenshot of build 45403921117-3 confirms no reported malicious packages, vulnerabilities or policy violations. Exposures panel advertises Advanced Security features rather than displaying exposure findings. Component coverage is not established. Hover over puzzle-piece icon in inner navigation and inspect tooltip; open Components if identified. No configuration changes needed. Policy-triggered rejection remains unverified.
