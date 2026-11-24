@@ -146,3 +146,6 @@ Build Versions screenshot shows 45417467925-2, 45417467925-1, 45411263512-3 and 
 
 ## Step 36 — REST Watch verification and policy inspection
 Successful GET /api/v2/watches/enterprise-docker-watch confirms active=true, all-builds resource with ant-patterns IncludePatterns=[enterprise-docker-ci], ExcludePatterns=[], bin_mgr_id=default, local docker-trial repository, and assigned enterprise-security-policy of type security. CLI 2.77.0 upgrade warning did not prevent retrieval. No watch changes required based on this evidence. Next run `jf xr curl -XGET "/api/v2/policies/enterprise-security-policy" --server-id=jfrog-trial` to inspect persisted severity, fail_build action and any restrictive criteria. Read-only diagnostic; no rerun required. Root cause remains unresolved and High threshold must be restored after controlled testing.
+
+## Step 37 — Empty policy API response
+User ran GET /api/v2/policies/enterprise-security-policy and received no visible output. This does not establish policy absence or permission failure. Repeat with `jf xr curl -i -XGET "/api/v2/policies/enterprise-security-policy" --server-id=jfrog-trial` to inspect HTTP status and headers. Redact sensitive headers before sharing. Endpoint compatibility and policy enforcement remain unverified. No configuration changes or reruns requested.
