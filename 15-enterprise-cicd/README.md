@@ -243,3 +243,8 @@ Created manual main-only docker-qa-access-verification.yml targeting qa environm
 User pulled eclipse-temurin:17-jre from Docker Hub successfully; digest sha256:541b08fc7f494edf14e436ff6bfb55767e4a115c87bfc547b8c5de957b58737f. Local pull does not establish that CI used an older digest or that vulnerabilities are remediated. No Dockerfile change yet.
 ## Step 10.18 — Identify blocking packages
 Inspect existing xray-scan.json from earlier build scan of enterprise-release-ci/45539352278-1, filtering High/Critical findings. Reuse evidence rather than rerun the same scan. Determine affected components and available fixed versions before choosing a replacement runtime. Results pending.
+
+## Step 10.18 result — Blocking component identified
+User's compact Xray JSON extraction shows XRAY-1161040 through XRAY-1161050, all associated with go://github.com/golang/go:1.27.3; XRAY-1161043 Critical, remaining ten High. Xray reports fixed versions [1.26.11], [1.27.4]. Earlier dependency path includes Canonical Pebble; base-image tooling is a likely origin, not independently established. These are scanner-reported versions, not independently verified upstream releases. No Java application change indicated by this evidence.
+## Step 10.19 — Evaluate alternative runtime
+Pull eclipse-temurin:17-jre-noble as a candidate. It may resolve to the same image as the default tag; compare digest before modifying CI. No claim of remediation until a fresh application build scan verifies findings. No gate bypass or vulnerable release promotion.
