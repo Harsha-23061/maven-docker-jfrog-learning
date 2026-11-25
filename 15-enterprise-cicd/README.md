@@ -150,3 +150,6 @@ Exact build screenshot 45539352278-1 shows SBOM 156, Critical 1, High 10, Medium
 
 ### Step 9.6 result
 User supplied trailing JSON scan output confirming JSON format works, including issue_id, references and component impact paths for the existing enterprise build. Full schema and severity fields not yet visible. Step 9.7: capture scan stdout to xray-scan.json, immediately capture exit code, parse with ConvertFrom-Json and display root property names and vulnerability severity grouping if vulnerabilities array exists. Do not assume missing arrays mean clean scan. No workflow modification yet.
+
+### Step 9.7 — JSON schema verified
+Actual PowerShell output confirms scan exit 0, first result fields xray_data_url and vulnerabilities, severity counts Medium 29, Low 5, High 10, Critical 1, matching UI. Step 9.8: test independent severity gate against existing xray-scan.json locally, requiring nonempty response, vulnerability arrays and recognized severity values; reject malformed results and any High/Critical finding. Expected rejection of existing build. No new scan or workflow change. Native policy enforcement and Maven dependency graph coverage remain unresolved; severity gate covers reported findings only.
