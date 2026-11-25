@@ -177,3 +177,8 @@ Reviewed Phase 10 and Phase 14 docs and existing qa-prod-promotion.yml: existing
 User confirmed creation of maven-qa-local (Maven local, releases enabled, snapshots disabled as instructed). Settings not independently inspected. Existing libs-release-local remains the build destination.
 ## Step 10.4 — Docker QA destination
 Create or reuse docker-qa-local, Docker local repository, description Security-validated Docker release candidates, remaining defaults. Existing docker-trial remains the build destination. Repository names are project choices. Creation pending confirmation. No promotion or new permissions yet; vulnerable release remains rejected by precheck.
+
+## Step 10.4 result
+User confirmed Docker QA repository creation; settings not independently inspected.
+## Step 10.5 — QA promotion permissions
+Create enterprise-qa-promote scoped to maven-qa-local and docker-qa-local, assigning maven-deployer Read, Deploy/Cache, Annotate only. Reuse existing identity for lab; dedicated protected QA identity preferable in production. This grants direct QA write access and therefore does not prevent bypass outside the planned workflow. Effective inherited permissions remain unaudited. No vulnerable artifact promotion authorized. Configuration pending confirmation.
