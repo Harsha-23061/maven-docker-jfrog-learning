@@ -1,0 +1,46 @@
+name: Enterprise Promotion Precheck
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: Published enterprise-release-ci build number
+        required: true
+        default: '45556750579-1'
+        type: string
+permissions:
+  contents: read
+jobs:
+  security-precheck:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
+      - name: Independently scan candidate before promotion
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BUILD_NUMBER" =~ ^[0-9]+-[0-9]+$ ]]
+          jf config add jfrog-trial --url=https://trialgccoro.jfrog.io --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          jf build-scan enterprise-release-ci "$BUILD_NUMBER" --rescan=true --fail=true --vuln=true --format=json --server-id=jfrog-trial > xray-scan.json
+          jq -e 'type == "array" and length > 0 and all(.[]; type == "object" and (.xray_data_url | type == "string" and length > 0) and (.vulnerabilities | type == "array") and all(.vulnerabilities[]; type == "object" and (.severity == "Critical" or .severity == "High" or .severity == "Medium" or .severity == "Low")))' xray-scan.json >/dev/null
+          BLOCKING=$(jq '[.[].vulnerabilities[] | select(.severity == "Critical" or .severity == "High")] | length' xray-scan.json)
+          if (( BLOCKING > 0 )); then
+            echo "BLOCKED: $BLOCKING High/Critical vulnerabilities"
+            exit 1
+          fi
+          echo 'PASS: Severity precheck passed; no promotion performed'
+      - name: Retain scan evidence
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promotion-precheck-${{ github.run_id }}-${{ github.run_attempt }}
+          path: xray-scan.json
+          retention-days: 7
+          if-no-files-found: warn
