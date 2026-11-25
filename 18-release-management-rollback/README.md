@@ -17,3 +17,6 @@ User confirmed PROD stage assignments; screenshot verifies Docker docker-prod-lo
 
 ## Steps 18.16–18.17 — Second release candidate and QA stage
 Screenshot verified OIDC build 45636994469-1 content selection: four modules, 15/15 artifact entries, zero recorded dependencies. User confirmed both bundle versions visible after creation. Final second bundle signature and stored contents not independently verified. QA stage absent from earlier promotion dropdown; locate stage administration and configure existing QA repositories if supported. No promotion performed yet; preserve QA validation and protected production approval.
+
+## Steps 18.18–18.21 — Three-stage lifecycle
+Screenshot verified creation of global QA stage of type Promote, initially zero repositories. User confirmed assigning docker-qa-local and maven-qa-local to QA and saving global lifecycle DEV > QA > PROD. Final order and assignments user-reported, not independently verified. Next inspect native Copy Artifacts promotion for bundle 1.0.1 to QA using default-lifecycle-key. Check current security gate and destination absence before executing; no native promotion yet. Lifecycle ordering is not proof of mandatory approvals or security enforcement.
