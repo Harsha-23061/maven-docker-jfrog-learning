@@ -1,0 +1,33 @@
+name: Enterprise Production Access Verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 5
+    env:
+      JFROG_USER: ${{ secrets.JFROG_PROD_USER }}
+      JFROG_TOKEN: ${{ secrets.JFROG_PROD_TOKEN }}
+    steps:
+      - name: Verify repository read boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=https://trialgccoro.jfrog.io/artifactory
+          check() {
+            local repo="$1" expected="$2" actual
+            actual=$(curl --silent --show-error --max-time 30 --user "$JFROG_USER:$JFROG_TOKEN" --output /dev/null --write-out '%{http_code}' "$BASE/api/storage/$repo")
+            echo "$repo: HTTP $actual (expected $expected)"
+            test "$actual" = "$expected"
+          }
+          check maven-qa-local 200
+          check docker-qa-local 200
+          check maven-prod-local 200
+          check docker-prod-local 200
+          check libs-release-local 403
+          check docker-trial 403
+          echo 'PASS: Production repository read boundaries'
