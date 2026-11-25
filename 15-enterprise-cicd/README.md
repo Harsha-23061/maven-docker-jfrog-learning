@@ -215,3 +215,8 @@ Generate a user-scoped token for qa-promoter, description github-qa-promotion, s
 User confirmed QA token generation; scope and expiration not independently verified.
 ## Step 10.13 — GitHub QA environment
 Create environment qa, no required reviewers or wait timer for automated QA, selected deployment branch main. Add environment secrets JFROG_QA_USER (qa-promoter) and JFROG_QA_TOKEN (new user token). Keep existing repository and production secrets unchanged. Environment-scoped credentials reduce exposure but do not independently enforce Xray checks against other authorized workflows. Configuration and access tests pending.
+
+## Step 10.13 result
+User confirmed QA environment and secrets configured; settings not independently inspected.
+## Step 10.14 — QA access verification
+Created .github/workflows/qa-access-verification.yml, manual main-only job targeting qa environment. Checks identity qa-promoter and nonempty token, then authenticated Storage API GET requests: libs-release-local, docker-trial, maven-qa-local, docker-qa-local expected 200; generic-prod-local expected 403. Fail on unexpected HTTP status. Read-only test, no artifacts modified. Does not verify write isolation, Docker registry protocol access, branch rejection, or all inherited permissions. Run and verify logs next.
