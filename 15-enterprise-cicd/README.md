@@ -288,3 +288,8 @@ GitHub Actions [run 45571474336](https://github.com/Harsha-23061/maven-docker-jf
 User confirmed creation of Maven local maven-prod-local and Docker local docker-prod-local. Maven releases enabled, snapshots disabled as instructed; settings not independently verified. Existing Generic PROD repository and GitHub production environment retained.
 ## Step 10.29 — Production source read permission
 Create enterprise-prod-source-read for existing production-promoter, Read only on maven-qa-local and docker-qa-local. No Deploy/Cache, Annotate, Delete/Overwrite or Manage. Retain existing Generic permissions. Names are lab conventions. Effective access must be tested before promotion. Configuration pending user confirmation.
+
+## Step 10.29 result
+User confirmed production source read permission configuration; effective access not yet tested.
+## Step 10.30 — Production destination permission
+Create enterprise-prod-deploy for existing production-promoter on maven-prod-local and docker-prod-local, granting Read, Deploy/Cache and Annotate only. Delete/Overwrite and Manage disabled. Retain existing Generic permissions and production environment credentials. Configuration pending confirmation; effective access and existing token validity must be verified before promotion. No production artifact copy authorized by this step.
