@@ -1,0 +1,35 @@
+name: QA Access Verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-qa-access:
+    if: github.ref == 'refs/heads/main'
+    environment: qa
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify QA identity read permissions
+        env:
+          JFROG_USER: ${{ secrets.JFROG_QA_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$JFROG_USER" = "qa-promoter"
+          test -n "$JFROG_TOKEN"
+          BASE=https://trialgccoro.jfrog.io/artifactory/api/storage
+          check() {
+            local path="$1" expected="$2" status
+            status=$(curl --silent --show-error --max-time 30 --user "$JFROG_USER:$JFROG_TOKEN" --output /dev/null --write-out '%{http_code}' "$BASE/$path")
+            if [[ "$status" != "$expected" ]]; then
+              echo "FAIL: $path returned $status; expected $expected"
+              exit 1
+            fi
+            echo "PASS: $path returned $status"
+          }
+          check libs-release-local 200
+          check docker-trial 200
+          check maven-qa-local 200
+          check docker-qa-local 200
+          check generic-prod-local 403
