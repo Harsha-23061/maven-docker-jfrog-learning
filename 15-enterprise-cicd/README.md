@@ -248,3 +248,8 @@ Inspect existing xray-scan.json from earlier build scan of enterprise-release-ci
 User's compact Xray JSON extraction shows XRAY-1161040 through XRAY-1161050, all associated with go://github.com/golang/go:1.27.3; XRAY-1161043 Critical, remaining ten High. Xray reports fixed versions [1.26.11], [1.27.4]. Earlier dependency path includes Canonical Pebble; base-image tooling is a likely origin, not independently established. These are scanner-reported versions, not independently verified upstream releases. No Java application change indicated by this evidence.
 ## Step 10.19 — Evaluate alternative runtime
 Pull eclipse-temurin:17-jre-noble as a candidate. It may resolve to the same image as the default tag; compare digest before modifying CI. No claim of remediation until a fresh application build scan verifies findings. No gate bypass or vulnerable release promotion.
+
+## Step 10.19 result
+User successfully pulled eclipse-temurin:17-jre-noble, digest sha256:ad806840ae514b83d3d8e3a00a5c1b7302fb0a6ae02bbbaf8a8bf1ffdf5367c6, distinct from previously pulled default tag. Different digest does not prove remediation.
+## Step 10.20 — Evaluate digest-pinned runtime in CI
+Changed only FROM in 15-enterprise-cicd/Dockerfile to eclipse-temurin:17-jre-noble@sha256:ad806840ae514b83d3d8e3a00a5c1b7302fb0a6ae02bbbaf8a8bf1ffdf5367c6. Preserve build/test/publish and security gate. Run Enterprise CI Pipeline on main to evaluate new candidate; no QA promotion authorized until scan and coverage verified. Pinning requires deliberate future security updates. Clean scan JSON shape and native policy enforcement remain unresolved.
