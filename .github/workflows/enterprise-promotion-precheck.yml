@@ -5,7 +5,7 @@ on:
       build_number:
         description: Published enterprise-release-ci build number
         required: true
-        default: '45556750579-1'
+        default: '45564602972-1'
         type: string
 permissions:
   contents: read
