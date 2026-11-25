@@ -101,6 +101,28 @@ jobs:
           echo "PASS: Registry image matches tested local image and Maven JAR"
           echo "Published Docker image: $IMAGE"
           echo "Registry image digest: $DIGEST"
+      - name: Set up JFrog CLI for Build Info
+        if: github.ref == 'refs/heads/main'
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
+      - name: Collect and publish Docker Build Info
+        if: github.ref == 'refs/heads/main'
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        run: |
+          set -euo pipefail
+          BUILD_NAME=enterprise-release-ci
+          BUILD_NUMBER="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          jf config add jfrog-trial --url=https://trialgccoro.jfrog.io --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          REF=$(cat staging/docker-image-ref.txt)
+          printf '%s:%s@%s\n' "${REF%@*}" "$VERSION" "${REF##*@}" > /tmp/image-file-details.txt
+          jf rt build-docker-create docker-trial --image-file=/tmp/image-file-details.txt --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" --server-id=jfrog-trial --module=enterprise-demo
+          jf rt build-publish "$BUILD_NAME" "$BUILD_NUMBER" --server-id=jfrog-trial
+          jf rt curl -XGET "/api/build/$BUILD_NAME/$BUILD_NUMBER" --server-id=jfrog-trial > staging/build-info.json
+          jq -e 'any(.buildInfo.modules[]?; .type == "docker" and .id == "enterprise-demo" and ((.artifacts // []) | length > 0))' staging/build-info.json
+          echo "PASS: Published Docker Build Info contains image artifacts"
       - name: Retain tested Maven artifact and evidence
         uses: actions/upload-artifact@v4
         with:
