@@ -187,3 +187,8 @@ Create enterprise-qa-promote scoped to maven-qa-local and docker-qa-local, assig
 User confirmed enterprise-qa-promote configuration; effective permissions not yet verified.
 ## Step 10.6 — Verify QA read access
 Run jf rt curl -XGET "/api/storage/maven-qa-local" --server-id=jfrog-trial and jf rt curl -XGET "/api/storage/docker-qa-local" --server-id=jfrog-trial. Expect repository metadata without authorization errors. Read-only test; does not establish write permissions or prevent direct bypass. No vulnerable artifact copy. Results pending.
+
+## Step 10.6 result — QA read access verified
+Actual Storage API responses identify maven-qa-local and docker-qa-local, path /, children [], created 2026-11-25T06:23:21.362Z and 06:24:32.698Z respectively. Both roots list no visible artifacts. Read access verified; write and isolation not established.
+## Step 10.7 — QA job dependency test
+Updated enterprise-promotion-precheck.yml in commit c9c4946cf90b40cbe08496d1d1159beccdf69418 with qa-promotion-boundary job, needs: security-precheck and explicit success/main condition. Echo-only job, no copy or credentials. Run default vulnerable candidate once to verify security failure skips downstream job, a distinct orchestration test. Actual copy, digest binding, positive gate test and restricted identity remain pending; no global bypass prevention. Existing workflows unchanged.
