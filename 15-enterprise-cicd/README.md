@@ -68,3 +68,6 @@ User confirmed saving Step 8.1 permissions; effective authorization remains unte
 
 ## Step 8.3 — Publish collected Docker Build Info
 User confirmed successful Step 8.2 collection; exact CLI output not supplied. Run `jf rt build-publish "enterprise-release-ci" "45445527719-1" --server-id=jfrog-trial` to publish collected metadata and test scoped build authorization. Expected success message: Build info successfully deployed. Publication pending; Maven module not yet collected. This is an independent Docker-only traceability test, not the final combined CI build. No image rebuild, upload or workflow changes required.
+
+## Step 8.4 — Verify published Docker module
+User confirmed successful build publication in Step 8.3; exact CLI output not supplied. Verify via read-only `jf rt curl -XGET "/api/build/enterprise-release-ci/45445527719-1" --server-id=jfrog-trial`. Inspect buildInfo.name, number, modules, Docker module type and nonempty artifacts. Publication alone does not prove artifact association; this check prevents recurrence of Phase 12 empty Build Info. Actual response pending. No workflow changes or reruns required.
