@@ -5,3 +5,6 @@ Release Lifecycle menu verified in trial UI. The Release Lifecycle creation wiza
 
 ## Step 18.7 — Promotion discovery
 Inspect available Promote action and target environments before executing any promotion. Release Bundle promotion is distinct from earlier individual artifact copies. Rollback requires a previously approved version and a deployment action; bundle creation alone does not deploy or roll back Kubernetes.
+
+## Release verification and product lifecycle notice
+UI screenshot confirms enterprise-demo-release version 1.0.0 exists; stage and status blank in list. Bundle-level Actions offers Create Version From Release Bundles and Create Version From Builds. JFrog UI banner states RLM deprecation July 31, 2026, anticipated end-of-life January 31, 2028, and recommends AppTrust. Dates recorded from displayed notice, not independently checked. Prioritize understanding existing RLM and exploring AppTrust rather than investing heavily in deprecated workflows. Version-level promotion and signing status remain unverified.
