@@ -1,0 +1,78 @@
+name: Enterprise Production Write Verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    env:
+      PROD_USER: ${{ secrets.JFROG_PROD_USER }}
+      PROD_TOKEN: ${{ secrets.JFROG_PROD_TOKEN }}
+    steps:
+      - name: Verify production identity write boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          REG=trialgccoro.jfrog.io
+          V="1.0.${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.example.lab</groupId><artifactId>prod-permission-probe</artifactId><version>%s</version></project>' "$V" > probe.pom
+          for repo in maven-prod-local maven-qa-local libs-release-local; do
+            expected=403
+            if [[ "$repo" == maven-prod-local ]]; then expected=201; fi
+            actual=$(curl -sS --max-time 60 -u "$PROD_USER:$PROD_TOKEN" -T probe.pom -o response.txt -w '%{http_code}' "https://$REG/artifactory/$repo/com/example/lab/prod-permission-probe/$V/prod-permission-probe-$V.pom")
+            echo "$repo: HTTP $actual (expected $expected)"
+            test "$actual" = "$expected"
+          done
+          printf '%s' "$PROD_TOKEN" | docker login "$REG" -u "$PROD_USER" --password-stdin
+          trap 'docker logout "$REG" >/dev/null 2>&1 || true' EXIT
+          printf 'FROM scratch\nLABEL purpose="permission-probe"\n' > Dockerfile
+          docker build -t permission-probe .
+          for repo in docker-prod-local docker-qa-local docker-trial; do
+            image="$REG/$repo/prod-permission-probe:$V"
+            docker tag permission-probe "$image"
+            if [[ "$repo" == docker-prod-local ]]; then
+              docker push "$image"
+            else
+              if docker push "$image" > push.log 2>&1; then
+                echo "Unexpected write to $repo"; exit 1
+              fi
+              cat push.log
+              grep -Eiq 'denied|forbidden|no permission|403|unauthorized' push.log
+            fi
+          done
+          echo 'PASS: Production identity write boundaries'
+  qa-denied:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 5
+    env:
+      USERNAME: ${{ secrets.JFROG_QA_USER }}
+      TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+    steps:
+      - name: Verify QA cannot publish to PROD
+        run: |
+          set -euo pipefail
+          V="1.0.${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '<project><modelVersion>4.0.0</modelVersion><groupId>com.example.lab</groupId><artifactId>qa-denied-probe</artifactId><version>%s</version></project>' "$V" > probe.pom
+          code=$(curl -sS --max-time 30 -u "$USERNAME:$TOKEN" -T probe.pom -o /dev/null -w '%{http_code}' "https://trialgccoro.jfrog.io/artifactory/maven-prod-local/com/example/lab/qa-denied-probe/$V/qa-denied-probe-$V.pom")
+          echo "QA to Maven PROD: $code"; test "$code" = 403
+  dev-denied:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      USERNAME: ${{ secrets.JFROG_USER }}
+      TOKEN: ${{ secrets.JFROG_TOKEN }}
+    steps:
+      - name: Verify DEV cannot publish to PROD
+        run: |
+          set -euo pipefail
+          V="1.0.${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '<project><modelVersion>4.0.0</modelVersion><groupId>com.example.lab</groupId><artifactId>dev-denied-probe</artifactId><version>%s</version></project>' "$V" > probe.pom
+          code=$(curl -sS --max-time 30 -u "$USERNAME:$TOKEN" -T probe.pom -o /dev/null -w '%{http_code}' "https://trialgccoro.jfrog.io/artifactory/maven-prod-local/com/example/lab/dev-denied-probe/$V/dev-denied-probe-$V.pom")
+          echo "DEV to Maven PROD: $code"; test "$code" = 403
