@@ -205,3 +205,8 @@ Create enterprise-qa-source-read for libs-release-local and docker-trial, assign
 User confirmed enterprise-qa-source-read setup. Effective permissions pending verification.
 ## Step 10.11 — Transfer QA destination permissions
 Reuse enterprise-qa-promote scoped to maven-qa-local and docker-qa-local. Remove maven-deployer from this target and assign qa-promoter Read, Deploy/Cache, Annotate only; no Delete/Overwrite or Manage. Preserve unrelated permission targets. Intended separation: CI publishes source artifacts; QA identity reads source and writes QA. Other grants may still permit bypass, so effective permissions require verification. Change pending user confirmation.
+
+## Step 10.11 result
+User confirmed transfer of enterprise-qa-promote from maven-deployer to qa-promoter. Effective permissions remain unverified.
+## Step 10.12 — QA access token
+Generate a user-scoped token for qa-promoter, description github-qa-promotion, seven-day expiry if available, Artifactory service if selectable, reference token disabled if optional. Store securely; never commit or share token. Separate CI, QA and PROD identities support least privilege. Token generation and effective scope pending verification. Existing production identity currently covers Generic repositories only; Maven/Docker production promotion is not yet implemented.
