@@ -113,3 +113,6 @@ Run 45538583911 published combined Build Info successfully but CI VCS SetProps r
 
 ## Step 8.14 — Targeted annotation verification
 User confirmed completion of the permission check; whether Annotate was newly enabled or already present was not specified. Test effective permission with `jf rt sp "libs-release-local/com/example/maven-docker-artifactory/1.0.7-ci-45538583911-1/maven-docker-artifactory-1.0.7-ci-45538583911-1.jar" "lab.annotation-check=verified" --server-id=jfrog-trial`. This adds a lab property to one existing artifact, without changing binary contents or rerunning CI. A successful result verifies annotation access for this path, not all automatic CI/VCS properties. Result pending.
+
+### Step 8.14 result — PASSED
+User supplied actual CLI output: Setting properties on the specified Maven JAR, Done setting properties, status success, totals success 1 failure 0. Effective Annotate access verified for this JAR. No binary rebuild or upload. Step 8.15: run unchanged Enterprise CI workflow once to validate automatic CI/VCS property setting across the combined build; inspect actual logs for SetProps 403 and both module checks. No further permission changes unless evidence requires them. Maven metadata discovery and security enforcement remain pending.
