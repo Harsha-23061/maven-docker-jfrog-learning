@@ -14,3 +14,6 @@ Version details screenshot shows current stage Unassigned, signing key default-l
 
 ## Steps 18.14–18.16 — PROD mapping and second release
 User confirmed PROD stage assignments; screenshot verifies Docker docker-prod-local and Maven maven-prod-local selected, Promote enabled. Cancel without promoting 1.0.0 because destinations already contain its artifacts. Plan bundle 1.0.1 from existing successful OIDC build enterprise-release-ci/45636994469-1, default-lifecycle-key, published artifacts only. Creation pending. New build passed CI severity gate but has not passed QA validation or protected production approval; bundle creation is not authorization to promote to PROD. Recheck security, QA validation and approval before production promotion.
+
+## Steps 18.16–18.17 — Second release candidate and QA stage
+Screenshot verified OIDC build 45636994469-1 content selection: four modules, 15/15 artifact entries, zero recorded dependencies. User confirmed both bundle versions visible after creation. Final second bundle signature and stored contents not independently verified. QA stage absent from earlier promotion dropdown; locate stage administration and configure existing QA repositories if supported. No promotion performed yet; preserve QA validation and protected production approval.
