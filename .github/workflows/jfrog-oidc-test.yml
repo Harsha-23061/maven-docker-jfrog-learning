@@ -1,0 +1,46 @@
+name: JFrog OIDC Authentication Test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: jfrog/setup-jfrog-cli@v4
+        id: jfrog
+        env:
+          JF_URL: https://trialgccoro.jfrog.io
+        with:
+          oidc-provider-name: github-oidc
+          oidc-audience: jfrog-github
+          disable-auto-build-publish: true
+      - name: Verify OIDC identity and repository boundaries
+        env:
+          OIDC_USER: ${{ steps.jfrog.outputs.oidc-user }}
+          OIDC_TOKEN: ${{ steps.jfrog.outputs.oidc-token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$OIDC_TOKEN"
+          test "$OIDC_USER" = maven-deployer
+          echo 'PASS: OIDC identity is maven-deployer'
+          BASE=https://trialgccoro.jfrog.io/artifactory
+          V="1.0.${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.example.lab</groupId><artifactId>oidc-probe</artifactId><version>%s</version></project>' "$V" > probe.pom
+          for repo in libs-release-local docker-trial; do
+            code=$(curl -sS --max-time 30 -u "$OIDC_USER:$OIDC_TOKEN" -o /dev/null -w '%{http_code}' "$BASE/api/storage/$repo")
+            echo "$repo read: $code"
+            test "$code" = 200
+          done
+          for repo in libs-release-local maven-qa-local maven-prod-local; do
+            expected=403
+            if [[ "$repo" == libs-release-local ]]; then expected=201; fi
+            code=$(curl -sS --max-time 30 -u "$OIDC_USER:$OIDC_TOKEN" -T probe.pom -o /dev/null -w '%{http_code}' "$BASE/$repo/com/example/lab/oidc-probe/$V/oidc-probe-$V.pom")
+            echo "$repo write: $code (expected $expected)"
+            test "$code" = "$expected"
+          done
+          echo 'PASS: OIDC Maven write boundaries'
