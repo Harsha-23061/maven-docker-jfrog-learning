@@ -110,3 +110,6 @@ Build **enterprise-release-ci/45538583911-1**. Version **1.0.7-ci-45538583911-1*
 
 ## Step 8.13 — Investigate CI/VCS annotation permissions
 Run 45538583911 published combined Build Info successfully but CI VCS SetProps returned 403. Likely missing Annotate permission on Maven output paths; not yet confirmed. Inspect existing maven-release-deploy permission target for libs-release-local and maven-deployer. If Annotate is absent, enable only Annotate while preserving existing Read and Deploy/Cache; do not grant Delete/Overwrite or Manage. If already enabled, inspect effective permissions before making further changes. No new identity, token, repository or workflow change. User confirmation and subsequent validation pending.
+
+## Step 8.14 — Targeted annotation verification
+User confirmed completion of the permission check; whether Annotate was newly enabled or already present was not specified. Test effective permission with `jf rt sp "libs-release-local/com/example/maven-docker-artifactory/1.0.7-ci-45538583911-1/maven-docker-artifactory-1.0.7-ci-45538583911-1.jar" "lab.annotation-check=verified" --server-id=jfrog-trial`. This adds a lab property to one existing artifact, without changing binary contents or rerunning CI. A successful result verifies annotation access for this path, not all automatic CI/VCS properties. Result pending.
