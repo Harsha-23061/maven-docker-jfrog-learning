@@ -1,0 +1,33 @@
+name: JFrog OIDC Negative Test
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  reject-unauthorized-workflow:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attempt unauthorized OIDC exchange
+        shell: bash
+        run: |
+          set -euo pipefail
+          JWT=$(curl --fail --silent --show-error -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=jfrog-github" | jq -er '.value')
+          echo "::add-mask::$JWT"
+          BODY=$(jq -n --arg jwt "$JWT" '{grant_type:"urn:ietf:params:oauth:grant-type:token-exchange",subject_token_type:"urn:ietf:params:oauth:token-type:id_token",subject_token:$jwt,provider_name:"github-oidc"}')
+          STATUS=$(curl --silent --show-error -o "$RUNNER_TEMP/oidc-response.json" -w '%{http_code}' -H 'Content-Type: application/json' --data "$BODY" https://trialgccoro.jfrog.io/access/api/v1/oidc/token)
+          echo "Exchange HTTP status: $STATUS"
+          if jq -e '.access_token? // empty' "$RUNNER_TEMP/oidc-response.json" >/dev/null; then
+            echo "FAIL: Unauthorized workflow obtained a token"
+            rm -f "$RUNNER_TEMP/oidc-response.json"
+            exit 1
+          fi
+          jq -c '{error, error_description, errors}' "$RUNNER_TEMP/oidc-response.json"
+          if [[ "$STATUS" =~ ^(400|401|403)$ ]] && jq -e '[.. | strings] | any(test("identity.mapping|no matching|claims.*match";"i"))' "$RUNNER_TEMP/oidc-response.json" >/dev/null; then
+            echo "PASS: Unauthorized workflow rejected by identity mapping"
+          else
+            echo "INCONCLUSIVE: Expected explicit mapping rejection"
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/oidc-response.json"
