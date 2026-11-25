@@ -210,3 +210,8 @@ Reuse enterprise-qa-promote scoped to maven-qa-local and docker-qa-local. Remove
 User confirmed transfer of enterprise-qa-promote from maven-deployer to qa-promoter. Effective permissions remain unverified.
 ## Step 10.12 — QA access token
 Generate a user-scoped token for qa-promoter, description github-qa-promotion, seven-day expiry if available, Artifactory service if selectable, reference token disabled if optional. Store securely; never commit or share token. Separate CI, QA and PROD identities support least privilege. Token generation and effective scope pending verification. Existing production identity currently covers Generic repositories only; Maven/Docker production promotion is not yet implemented.
+
+## Step 10.12 result
+User confirmed QA token generation; scope and expiration not independently verified.
+## Step 10.13 — GitHub QA environment
+Create environment qa, no required reviewers or wait timer for automated QA, selected deployment branch main. Add environment secrets JFROG_QA_USER (qa-promoter) and JFROG_QA_TOKEN (new user token). Keep existing repository and production secrets unchanged. Environment-scoped credentials reduce exposure but do not independently enforce Xray checks against other authorized workflows. Configuration and access tests pending.
