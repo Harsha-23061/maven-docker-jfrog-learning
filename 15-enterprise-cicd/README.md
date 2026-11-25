@@ -133,3 +133,8 @@ Reuse Phase 12 policy enterprise-security-policy, rule block-high-critical and w
 User confirmed adding enterprise-release-ci to Xray indexing. Scan completion not yet verified.
 ## Step 9.2 — Associate enterprise build with existing watch
 Open Xray Watches > enterprise-docker-watch > Resources, add enterprise-release-ci as an included build name/pattern alongside existing enterprise-docker-ci, retain docker-trial repository and enterprise-security-policy assignment. Save. Keep High threshold and Fail Build unchanged. Watch association alone is not evidence of blocking enforcement. User confirmation pending.
+
+### Step 9.2 result
+User confirmed saving watch association for enterprise-release-ci; effective policy evaluation not yet verified.
+## Step 9.3 — Manual security scan of existing combined build
+Run `jf build-scan "enterprise-release-ci" "45539352278-1" --rescan=true --fail=true --vuln=true --server-id=jfrog-trial` followed immediately by `Write-Host "Scan exit code: $LASTEXITCODE"` in PowerShell. Reuse existing build and identity, no rebuild or pipeline change. Vulnerability findings and exit code must be evaluated together; zero alone does not establish policy enforcement, especially given Phase 12 unresolved negative test. Results pending.
