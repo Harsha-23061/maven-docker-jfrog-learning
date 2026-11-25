@@ -128,3 +128,8 @@ Command: `mvn -B -U -s "$env:USERPROFILE\.m2\settings-jfrog.xml" "-Dmaven.repo.l
 
 ## Step 9.1 — Index combined enterprise build in Xray
 Reuse Phase 12 policy enterprise-security-policy, rule block-high-critical and watch enterprise-docker-watch; last known threshold High and Fail Build enabled. First navigate Xray Scans List > Builds > Add/Remove to Xray and select enterprise-release-ci for indexing, retaining enterprise-docker-ci. No new policy, token, repository or workflow change. Indexing alone does not assign a watch or enforce a gate. Next associate the new build with the existing watch and validate scan and blocking behavior against existing release 45539352278-1. Prior Phase 12 build-level enforcement remained unresolved; no production approval until a fail-closed gate is verified. User confirmation of indexing pending.
+
+### Step 9.1 result
+User confirmed adding enterprise-release-ci to Xray indexing. Scan completion not yet verified.
+## Step 9.2 — Associate enterprise build with existing watch
+Open Xray Watches > enterprise-docker-watch > Resources, add enterprise-release-ci as an included build name/pattern alongside existing enterprise-docker-ci, retain docker-trial repository and enterprise-security-policy assignment. Save. Keep High threshold and Fail Build unchanged. Watch association alone is not evidence of blocking enforcement. User confirmation pending.
