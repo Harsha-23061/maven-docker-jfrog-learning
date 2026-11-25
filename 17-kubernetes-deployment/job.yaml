@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: enterprise-demo
+  namespace: enterprise-prod
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+        - name: jfrog-registry-secret
+      containers:
+        - name: enterprise-demo
+          image: trialgccoro.jfrog.io/docker-prod-local/enterprise-demo@sha256:085b09ef0029ef23062f729c0b262af5ff40e5a340ac904e91a4a8d41b892ccf
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
