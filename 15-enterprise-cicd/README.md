@@ -195,3 +195,8 @@ Updated enterprise-promotion-precheck.yml in commit c9c4946cf90b40cbe08496d1d115
 
 ## Step 10.8 — Negative QA job dependency test VERIFIED
 [Workflow run 45560858904](https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45560858904): security-precheck job 139023970573 completed **failure** after Xray scan of enterprise-release-ci/45556750579-1: native CLI logged `No violations found.`; independent gate logged `BLOCKED: 11 High/Critical vulnerabilities`, exit code 1. Crucially, downstream `qa-promotion-boundary` job 139024093320 completed **skipped**, confirming `needs: security-precheck` dependency blocks that job. Scan evidence upload passed, artifact `promotion-precheck-45560858904-1`, ID 14997339481, 37254 bytes (one file), URL https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45560858904/artifacts/14997339481. This proves control flow only; QA job is currently echo-only and no artifacts copied. Direct JFrog write permissions for maven-deployer permit bypass outside this specific workflow; separation-of-duties and real promotion still pending. Do not repeat this negative test unnecessarily.
+
+## Step 10.9 — Dedicated QA identity
+User confirmed creation of qa-promoter, instructed non-admin and no groups. Actual account settings not independently inspected. No token yet.
+## Step 10.10 — Source read permissions
+Create enterprise-qa-source-read for libs-release-local and docker-trial, assigning qa-promoter Read only. This separates source consumption from publication and supports build-once promotion. Configuration pending confirmation. QA destination permissions and removal of maven-deployer QA write access remain pending; no effective isolation claimed.
