@@ -1,0 +1,129 @@
+name: Enterprise Production Promotion - Release 1.0.1
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: enterprise-production-promotion
+  cancel-in-progress: false
+jobs:
+  security-precheck:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
+      - name: Rescan exact approved candidate before PROD
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER='45636994469-1'
+          jf config add jfrog-trial --url=https://trialgccoro.jfrog.io --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          jf build-scan enterprise-release-ci "$BUILD_NUMBER" --rescan=true --fail=true --vuln=true --format=json --server-id=jfrog-trial > xray-scan.json
+          jq -e 'type == "array" and length > 0 and all(.[]; type == "object" and (.xray_data_url | type == "string" and length > 0) and (.vulnerabilities | type == "array") and all(.vulnerabilities[]; type == "object" and (.severity == "Critical" or .severity == "High" or .severity == "Medium" or .severity == "Low")))' xray-scan.json >/dev/null
+          BLOCKING=$(jq '[.[].vulnerabilities[] | select(.severity == "Critical" or .severity == "High")] | length' xray-scan.json)
+          if (( BLOCKING > 0 )); then
+            echo "BLOCKED: $BLOCKING High/Critical vulnerabilities"
+            exit 1
+          fi
+          echo 'PASS: Exact candidate security precheck'
+      - name: Retain independent Xray evidence
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-promotion-xray-${{ github.run_id }}-${{ github.run_attempt }}
+          path: xray-scan.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  production-promotion:
+    needs: security-precheck
+    if: github.ref == 'refs/heads/main' && needs.security-precheck.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    env:
+      JFROG_USER: ${{ secrets.JFROG_PROD_USER }}
+      JFROG_TOKEN: ${{ secrets.JFROG_PROD_TOKEN }}
+    steps:
+      - uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
+      - name: Verify validated QA candidate and empty PROD destinations
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=1.0.7-ci-45636994469-1
+          SHA=84402355a1defeca3e5b9ff2ce64949692cf95c5879ae789741dc50d80c2d3b3
+          DIGEST=sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3
+          REG=trialgccoro.jfrog.io
+          BASE="https://$REG/artifactory"
+          PATH_BASE="com/example/maven-docker-artifactory/$VERSION"
+          FILE="maven-docker-artifactory-$VERSION"
+          SRC="maven-qa-local/$PATH_BASE/$FILE"
+          DST="maven-prod-local/$PATH_BASE/$FILE"
+          api() { curl -fsS --max-time 60 -u "$JFROG_USER:$JFROG_TOKEN" "$@"; }
+          absent() {
+            local code
+            code=$(curl -sS --max-time 30 -u "$JFROG_USER:$JFROG_TOKEN" -o /dev/null -w '%{http_code}' "$1")
+            test "$code" = 404 || { echo "BLOCKED: destination check returned $code"; exit 1; }
+          }
+          for ext in jar pom; do
+            api "$BASE/api/storage/$SRC.$ext?properties" | jq -e '.properties.environment == ["qa"] and .properties["release.status"] == ["validated"]'
+            api "$BASE/$SRC.$ext" -o "qa.$ext"
+            absent "$BASE/api/storage/$DST.$ext"
+          done
+          test "$(sha256sum qa.jar | cut -d ' ' -f 1)" = "$SHA"
+          test "$(sha256sum qa.pom | cut -d ' ' -f 1)" = "38a9aa015ab72e6f997def9e135de50ec255b2dffad445c12830442bd3134446"
+          absent "https://$REG/v2/docker-prod-local/enterprise-demo/manifests/$VERSION"
+          printf '%s' "$JFROG_TOKEN" | docker login "$REG" -u "$JFROG_USER" --password-stdin
+          trap 'docker logout "$REG" >/dev/null 2>&1 || true' EXIT
+          SOURCE="$REG/docker-qa-local/enterprise-demo:$VERSION"
+          TARGET="$REG/docker-prod-local/enterprise-demo:$VERSION"
+          docker pull "$SOURCE" | tee source-pull.log
+          grep -F "Digest: $DIGEST" source-pull.log
+          CID=$(docker create "$SOURCE")
+          docker cp "$CID:/app/app.jar" source.jar
+          docker rm "$CID"
+          cmp qa.jar source.jar
+          echo 'PASS: Validated QA candidate and absent PROD destinations'
+          jf config add jfrog-prod --url="https://$REG" --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          jf rt docker-promote enterprise-demo docker-qa-local docker-prod-local --source-tag="$VERSION" --target-tag="$VERSION" --copy=true --server-id=jfrog-prod
+          docker pull "$TARGET" | tee target-pull.log
+          grep -F "Digest: $DIGEST" target-pull.log
+          CID=$(docker create "$TARGET")
+          docker cp "$CID:/app/app.jar" prod-image.jar
+          docker rm "$CID"
+          cmp qa.jar prod-image.jar
+          test "$(docker image inspect --format '{{.Config.User}}' "$TARGET")" = "10001:10001"
+          printf 'Hello and welcome!\ni = 1\ni = 2\ni = 3\ni = 4\ni = 5\n' > expected.txt
+          docker run --rm "$REG/docker-prod-local/enterprise-demo@$DIGEST" > actual.txt
+          diff -u expected.txt actual.txt
+          for ext in jar pom; do
+            jf rt cp "$SRC.$ext" "maven-prod-local/$PATH_BASE/" --flat=true --server-id=jfrog-prod
+            api "$BASE/$DST.$ext" -o "prod.$ext"
+            cmp "qa.$ext" "prod.$ext"
+          done
+          for ext in jar pom; do
+            jf rt sp "$DST.$ext" "environment=prod;release.status=lab-released" --server-id=jfrog-prod
+            api "$BASE/api/storage/$DST.$ext?properties" | jq -e '.properties.environment == ["prod"] and .properties["release.status"] == ["lab-released"]'
+          done
+          jq -n --arg version "$VERSION" --arg jar "$SHA" --arg digest "$DIGEST" --arg pom "$(sha256sum prod.pom | cut -d ' ' -f 1)" '{version:$version,jar_sha256:$jar,docker_digest:$digest,pom_sha256:$pom,status:"lab-released"}' > prod-evidence.json
+          echo 'PASS: QA to PROD promotion and smoke test without rebuild'
+      - name: Retain production evidence
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-copy-check-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            prod-evidence.json
+            source-pull.log
+            target-pull.log
+            actual.txt
+          retention-days: 7
+          if-no-files-found: warn
