@@ -172,3 +172,8 @@ Reviewed Phase 10 and Phase 14 docs and existing qa-prod-promotion.yml: existing
 
 ## Step 10.2 — Independent promotion precheck negative test VERIFIED
 [GitHub Actions run 45557632379](https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45557632379), job 139013422996, completed with **failure expected**. CLI setup passed; independently scanning existing enterprise-release-ci/45556750579-1 completed; Xray logged `No violations found.` but our severity precheck logged `BLOCKED: 11 High/Critical vulnerabilities`, then `Process completed with exit code 1`. Retain scan evidence step passed; artifact `promotion-precheck-45557632379-1` ID 14996760555 (37254 bytes) contains one xray-scan.json. No artifact promotion occurred in this workflow. This verifies independent negative-test rejection, not global access prevention or enforcement of an unrelated promotion workflow. Existing QA->PROD Generic lab workflow has not been changed; production-style gating still pending. Do not rerun same negative test unnecessarily. Node20 action deprecation warning nonblocking.
+
+## Step 10.3 — Maven QA destination
+User confirmed creation of maven-qa-local (Maven local, releases enabled, snapshots disabled as instructed). Settings not independently inspected. Existing libs-release-local remains the build destination.
+## Step 10.4 — Docker QA destination
+Create or reuse docker-qa-local, Docker local repository, description Security-validated Docker release candidates, remaining defaults. Existing docker-trial remains the build destination. Repository names are project choices. Creation pending confirmation. No promotion or new permissions yet; vulnerable release remains rejected by precheck.
