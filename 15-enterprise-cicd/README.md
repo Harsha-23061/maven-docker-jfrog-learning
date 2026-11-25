@@ -141,3 +141,6 @@ Run `jf build-scan "enterprise-release-ci" "45539352278-1" --rescan=true --fail=
 
 ### Step 9.3 result — scan execution passed, enforcement unverified
 User supplied partial scan table showing Low severity Ubuntu OS package findings and exit code 0. Full severity distribution and violation count not supplied. Zero exit code does not establish enforcement. Step 9.4: inspect existing build 45539352278-1 in Xray Scans List > Builds > enterprise-release-ci, record severity totals and policy violations before choosing a negative test. Do not lower policy threshold or rebuild yet.
+
+### Step 9.4 result — vulnerability summary verified
+User screenshot of enterprise-release-ci Build Overview latest version (truncated label consistent with 45539352278-1) shows 45 vulnerabilities: Critical 1, High 10, Medium 29, Low 5. Previous CLI scan exit 0. Eleven findings meet the intended High/Critical severity threshold; actual policy applicability and violation count remain unverified. Do not lower threshold or introduce another vulnerable image. Step 9.5: select Build Versions and inspect exact build 45539352278-1 violation count. Production promotion remains blocked pending validated enforcement.
