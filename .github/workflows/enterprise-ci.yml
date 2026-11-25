@@ -128,7 +128,21 @@ jobs:
           POM_SHA=$(sha256sum staging/pom.xml | cut -d " " -f 1)
           jq -e --arg jar "$JAR_SHA" --arg pom "$POM_SHA" 'any(.buildInfo.modules[]?; .id == "maven-docker-artifactory" and any(.artifacts[]?; .sha256 == $jar) and any(.artifacts[]?; .sha256 == $pom))' staging/build-info.json
           echo "PASS: Combined Build Info contains tested Maven JAR and POM"
+      - name: Enforce Xray severity security gate
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          jf build-scan "enterprise-release-ci" "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" --fail=true --vuln=true --format=json --server-id=jfrog-trial > staging/xray-scan.json
+          jq -e 'type == "array" and length > 0 and all(.[]; type == "object" and (.xray_data_url | type == "string" and length > 0) and (.vulnerabilities | type == "array") and all(.vulnerabilities[]; type == "object" and (.severity == "Critical" or .severity == "High" or .severity == "Medium" or .severity == "Low")))' staging/xray-scan.json >/dev/null
+          BLOCKING=$(jq '[.[].vulnerabilities[] | select(.severity == "Critical" or .severity == "High")] | length' staging/xray-scan.json)
+          if (( BLOCKING > 0 )); then
+            echo "BLOCKED: $BLOCKING High/Critical vulnerabilities"
+            exit 1
+          fi
+          echo "PASS: Xray severity gate passed"
       - name: Retain tested Maven artifact and evidence
+        if: always() && !cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: tested-maven-${{ env.VERSION }}
