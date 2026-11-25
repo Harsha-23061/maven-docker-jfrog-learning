@@ -12,3 +12,9 @@ Attempt with 4096 MB rejected because Docker Desktop reported 3918 MB available.
 
 ## Steps 17.3–17.4 — Runtime identity and namespace
 User confirmed namespace creation and verification, creation of non-admin `kubernetes-puller` with no groups, and permission `kubernetes-prod-pull` granting Read only on `docker-prod-local` with include `**`. No deploy/cache, annotate, delete/overwrite or manage permissions requested. Effective access boundaries still pending independent verification. Step 17.4.3: generate user-scoped token `minikube-prod-registry-pull` for this identity, seven-day expiration and Artifactory service if selectable. Never commit or print token. Token generation pending user confirmation. Kubernetes registry credentials will be stored in a namespace-specific image pull secret.
+
+## Step 17.4.4 — Runtime repository read boundaries (PASS)
+User confirmed token generation and ran authenticated storage API GET requests with kubernetes-puller. Actual HTTP statuses: docker-prod-local 200, docker-qa-local 403, docker-trial 403, maven-prod-local 403. All four matched expectations. Token lifetime and write denial not independently tested; actual registry pull pending.
+
+## Step 17.5 — Registry secret (pending)
+Create `jfrog-registry-secret` using `kubectl create secret docker-registry` in `enterprise-prod`, registry hostname `trialgccoro.jfrog.io`, credentials from session environment variables K8S_JFROG_USER and K8S_JFROG_TOKEN. Verify type kubernetes.io/dockerconfigjson using kubectl get secret without exposing contents. Never commit secret data. Lab CLI passes token as process argument; production should use stronger secret management, restricted RBAC and encryption at rest. Base64 is not encryption.
