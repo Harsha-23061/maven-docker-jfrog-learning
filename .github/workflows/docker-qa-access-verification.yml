@@ -39,7 +39,7 @@ jobs:
               exit 1
             fi
             cat push.log
-            if ! grep -Eiq 'denied|forbidden|403|unauthorized|insufficient.scope' push.log; then
+            if ! grep -Eiq 'denied|forbidden|403|unauthorized|insufficient.scope|no permission to write manifest' push.log; then
               echo "FAIL: push failed without clear authorization denial"
               exit 1
             fi
