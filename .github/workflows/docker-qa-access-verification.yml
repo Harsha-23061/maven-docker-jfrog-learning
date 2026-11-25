@@ -1,0 +1,60 @@
+name: Docker QA Access Verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-docker-boundaries:
+    if: github.ref == 'refs/heads/main'
+    environment: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Verify Docker registry permissions
+        env:
+          QA_USER: ${{ secrets.JFROG_QA_USER }}
+          QA_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+          DEV_USER: ${{ secrets.JFROG_USER }}
+          DEV_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$QA_USER" = qa-promoter
+          test "$DEV_USER" = maven-deployer
+          test -n "$QA_TOKEN"
+          test -n "$DEV_TOKEN"
+          REGISTRY=trialgccoro.jfrog.io
+          TAG="probe-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+          printf 'Docker permission probe %s\n' "$TAG" > probe.txt
+          printf 'FROM scratch\nCOPY probe.txt /probe.txt\n' > Dockerfile
+          docker build --provenance=false --sbom=false -t permission-probe:local .
+          QA_IMAGE="$REGISTRY/docker-qa-local/permission-probe:$TAG"
+          SOURCE_IMAGE="$REGISTRY/docker-trial/permission-probe:$TAG"
+          DEV_IMAGE="$REGISTRY/docker-qa-local/dev-permission-probe:$TAG"
+          deny_push() {
+            local image="$1"
+            if docker push "$image" > push.log 2>&1; then
+              echo "FAIL: unexpected push success: $image"
+              exit 1
+            fi
+            cat push.log
+            if ! grep -Eiq 'denied|forbidden|403|unauthorized|insufficient.scope' push.log; then
+              echo "FAIL: push failed without clear authorization denial"
+              exit 1
+            fi
+            echo "PASS: push denied: $image"
+          }
+          printf '%s' "$QA_TOKEN" | docker login "$REGISTRY" --username "$QA_USER" --password-stdin
+          docker tag permission-probe:local "$QA_IMAGE"
+          docker push "$QA_IMAGE"
+          echo "PASS: QA push allowed"
+          docker image rm "$QA_IMAGE"
+          docker pull "$QA_IMAGE"
+          echo "PASS: QA pull allowed"
+          docker tag permission-probe:local "$SOURCE_IMAGE"
+          deny_push "$SOURCE_IMAGE"
+          docker logout "$REGISTRY"
+          printf '%s' "$DEV_TOKEN" | docker login "$REGISTRY" --username "$DEV_USER" --password-stdin
+          docker tag permission-probe:local "$DEV_IMAGE"
+          deny_push "$DEV_IMAGE"
