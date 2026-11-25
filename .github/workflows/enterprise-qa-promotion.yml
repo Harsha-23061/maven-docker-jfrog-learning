@@ -1,0 +1,150 @@
+name: Enterprise QA Artifact Promotion
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: enterprise-qa-promotion
+  cancel-in-progress: false
+jobs:
+  security-precheck:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
+      - name: Rescan exact approved candidate before QA
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_NUMBER='45564602972-1'
+          jf config add jfrog-trial --url=https://trialgccoro.jfrog.io --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          jf build-scan enterprise-release-ci "$BUILD_NUMBER" --rescan=true --fail=true --vuln=true --format=json --server-id=jfrog-trial > xray-scan.json
+          jq -e 'type == "array" and length > 0 and all(.[]; type == "object" and (.xray_data_url | type == "string" and length > 0) and (.vulnerabilities | type == "array") and all(.vulnerabilities[]; type == "object" and (.severity == "Critical" or .severity == "High" or .severity == "Medium" or .severity == "Low")))' xray-scan.json >/dev/null
+          BLOCKING=$(jq '[.[].vulnerabilities[] | select(.severity == "Critical" or .severity == "High")] | length' xray-scan.json)
+          if (( BLOCKING > 0 )); then
+            echo "BLOCKED: $BLOCKING High/Critical vulnerabilities"
+            exit 1
+          fi
+          echo 'PASS: Exact candidate security precheck'
+      - name: Retain independent Xray evidence
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-promotion-xray-${{ github.run_id }}-${{ github.run_attempt }}
+          path: xray-scan.json
+          retention-days: 7
+          if-no-files-found: warn
+
+  qa-promotion:
+    needs: security-precheck
+    if: github.ref == 'refs/heads/main' && needs.security-precheck.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: qa
+    env:
+      JFROG_USER: ${{ secrets.JFROG_QA_USER }}
+      JFROG_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+      BASE: https://trialgccoro.jfrog.io/artifactory
+      VERSION: 1.0.7-ci-45564602972-1
+      EXPECTED_JAR_SHA: 350d37a5fb616e0b79f1707adb79e5572e3d03f024240889cfbf79c1649b4ac6
+      EXPECTED_DOCKER_DIGEST: sha256:085b09ef0029ef23062f729c0b262af5ff40e5a340ac904e91a4a8d41b892ccf
+    steps:
+      - uses: jfrog/setup-jfrog-cli@v4
+        with:
+          disable-auto-build-publish: true
+      - name: Verify immutable DEV sources and QA Maven destination
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          API_ARTIFACT="com/example/maven-docker-artifactory/$VERSION/maven-docker-artifactory-$VERSION"
+          SRC_JAR="libs-release-local/$API_ARTIFACT.jar"
+          SRC_POM="libs-release-local/$API_ARTIFACT.pom"
+          DST_JAR="maven-qa-local/$API_ARTIFACT.jar"
+          DST_POM="maven-qa-local/$API_ARTIFACT.pom"
+          api() { curl --silent --show-error --fail --max-time 60 --user "$JFROG_USER:$JFROG_TOKEN" "$@"; }
+          SHA=$(api "$BASE/api/storage/$SRC_JAR" | jq -er '.checksums.sha256')
+          test "$SHA" = "$EXPECTED_JAR_SHA"
+          api "$BASE/$SRC_JAR" -o /tmp/dev-app.jar
+          test "$(sha256sum /tmp/dev-app.jar | cut -d ' ' -f 1)" = "$EXPECTED_JAR_SHA"
+          api "$BASE/$SRC_POM" -o /tmp/dev-app.pom
+          jq -n --arg version "$VERSION" --arg jar "$EXPECTED_JAR_SHA" --arg pom "$(sha256sum /tmp/dev-app.pom | cut -d ' ' -f 1)" '{version:$version,jar_sha256:$jar,pom_sha256:$pom}' > /tmp/qa-source-evidence.json
+          for target in "$DST_JAR" "$DST_POM"; do
+            status=$(curl --silent --show-error --max-time 30 --user "$JFROG_USER:$JFROG_TOKEN" --output /dev/null --write-out '%{http_code}' "$BASE/api/storage/$target")
+            test "$status" = 404 || { echo "BLOCKED: QA destination not empty or inaccessible ($status)"; exit 1; }
+          done
+          echo "PASS: DEV Maven source and QA destination checks"
+      - name: Verify original Docker image digest and JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          REGISTRY=trialgccoro.jfrog.io
+          SRC="$REGISTRY/docker-trial/enterprise-demo:$VERSION"
+          printf '%s' "$JFROG_TOKEN" | docker login "$REGISTRY" --username "$JFROG_USER" --password-stdin
+          docker pull "$SRC" | tee /tmp/source-pull.log
+          grep -F "Digest: $EXPECTED_DOCKER_DIGEST" /tmp/source-pull.log
+          ID=$(docker create "$SRC")
+          trap 'docker rm "$ID" >/dev/null 2>&1 || true' EXIT
+          docker cp "$ID:/app/app.jar" /tmp/dev-docker-app.jar
+          test "$(sha256sum /tmp/dev-docker-app.jar | cut -d ' ' -f 1)" = "$EXPECTED_JAR_SHA"
+          echo "PASS: Source Docker manifest digest and embedded JAR verified"
+      - name: Copy Docker image to QA without rebuilding
+        shell: bash
+        run: |
+          set -euo pipefail
+          jf config add jfrog-qa --url=https://trialgccoro.jfrog.io --user="$JFROG_USER" --access-token="$JFROG_TOKEN" --interactive=false
+          jf rt docker-promote enterprise-demo docker-trial docker-qa-local --source-tag="$VERSION" --target-tag="$VERSION" --copy=true --server-id=jfrog-qa
+          echo 'PASS: Server-side Docker QA copy completed'
+      - name: Verify QA Docker manifest and embedded JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="trialgccoro.jfrog.io/docker-qa-local/enterprise-demo:$VERSION"
+          docker pull "$TARGET" | tee /tmp/qa-pull.log
+          grep -F "Digest: $EXPECTED_DOCKER_DIGEST" /tmp/qa-pull.log
+          CID=$(docker create "$TARGET")
+          trap 'docker rm "$CID" >/dev/null 2>&1 || true; docker logout trialgccoro.jfrog.io >/dev/null 2>&1 || true' EXIT
+          docker cp "$CID:/app/app.jar" /tmp/qa-docker-app.jar
+          cmp /tmp/dev-app.jar /tmp/qa-docker-app.jar
+          echo 'PASS: QA Docker manifest digest and JAR match DEV'
+      - name: Copy tested Maven JAR and POM to QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATH_BASE="com/example/maven-docker-artifactory/$VERSION"
+          JAR="maven-docker-artifactory-$VERSION.jar"
+          POM="maven-docker-artifactory-$VERSION.pom"
+          jf rt cp "libs-release-local/$PATH_BASE/$JAR" "maven-qa-local/$PATH_BASE/" --flat=true --server-id=jfrog-qa
+          jf rt cp "libs-release-local/$PATH_BASE/$POM" "maven-qa-local/$PATH_BASE/" --flat=true --server-id=jfrog-qa
+          echo 'PASS: Maven JAR and POM copied without rebuilding'
+      - name: Verify QA Maven checksums and set QA properties
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="maven-qa-local/com/example/maven-docker-artifactory/$VERSION/maven-docker-artifactory-$VERSION"
+          api() { curl --silent --show-error --fail --max-time 60 --user "$JFROG_USER:$JFROG_TOKEN" "$@"; }
+          for extension in jar pom; do
+            api "$BASE/$ROOT.$extension" -o "/tmp/qa-app.$extension"
+          done
+          cmp /tmp/dev-app.jar /tmp/qa-app.jar
+          cmp /tmp/dev-app.pom /tmp/qa-app.pom
+          test "$(sha256sum /tmp/qa-app.jar | cut -d ' ' -f 1)" = "$EXPECTED_JAR_SHA"
+          jf rt sp "$ROOT.jar" "environment=qa;release.status=qa-pending" --server-id=jfrog-qa
+          jf rt sp "$ROOT.pom" "environment=qa;release.status=qa-pending" --server-id=jfrog-qa
+          api "$BASE/api/storage/$ROOT.jar?properties" | jq -e '.properties.environment == ["qa"] and .properties["release.status"] == ["qa-pending"]' >/dev/null
+          echo 'PASS: QA Maven copy matches DEV bytes and has QA properties'
+      - name: Retain QA promotion verification
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-copy-check-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/qa-source-evidence.json
+          retention-days: 7
+          if-no-files-found: warn
