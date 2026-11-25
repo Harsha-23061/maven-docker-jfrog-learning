@@ -1,0 +1,44 @@
+name: QA Write Access Verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-write-boundaries:
+    if: github.ref == 'refs/heads/main'
+    environment: qa
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test controlled Maven and Generic write boundaries
+        env:
+          QA_USER: ${{ secrets.JFROG_QA_USER }}
+          QA_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+          DEV_USER: ${{ secrets.JFROG_USER }}
+          DEV_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$QA_USER" = qa-promoter
+          test "$DEV_USER" = maven-deployer
+          test -n "$QA_TOKEN"
+          test -n "$DEV_TOKEN"
+          BASE=https://trialgccoro.jfrog.io/artifactory
+          VERSION="1.0-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          PATH_PART="lab/permission-probe/$VERSION/permission-probe-$VERSION.pom"
+          printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>lab</groupId><artifactId>permission-probe</artifactId><version>%s</version><packaging>pom</packaging></project>\n' "$VERSION" > probe.pom
+          check() {
+            local user="$1" token="$2" repo="$3" path="$4" expected="$5" status
+            status=$(curl --silent --show-error --max-time 30 --user "$user:$token" --upload-file probe.pom --output /dev/null --write-out '%{http_code}' "$BASE/$repo/$path")
+            if [[ "$status" != "$expected" ]]; then
+              echo "FAIL: $repo/$path returned $status; expected $expected. Inspect for unexpected test upload."
+              exit 1
+            fi
+            echo "PASS: $repo/$path returned $status"
+          }
+          check "$QA_USER" "$QA_TOKEN" maven-qa-local "$PATH_PART" 201
+          check "$QA_USER" "$QA_TOKEN" libs-release-local "$PATH_PART" 403
+          check "$QA_USER" "$QA_TOKEN" generic-prod-local "permission-probes/$VERSION/probe.pom" 403
+          DEV_PATH="lab/dev-permission-probe/$VERSION/dev-permission-probe-$VERSION.pom"
+          sed 's/<artifactId>permission-probe<\/artifactId>/<artifactId>dev-permission-probe<\/artifactId>/' probe.pom > dev-probe.pom
+          mv dev-probe.pom probe.pom
+          check "$DEV_USER" "$DEV_TOKEN" maven-qa-local "$DEV_PATH" 403
