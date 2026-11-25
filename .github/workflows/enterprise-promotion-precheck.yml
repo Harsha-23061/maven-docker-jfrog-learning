@@ -44,3 +44,11 @@ jobs:
           path: xray-scan.json
           retention-days: 7
           if-no-files-found: warn
+
+  qa-promotion-boundary:
+    needs: security-precheck
+    if: github.ref == 'refs/heads/main' && needs.security-precheck.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify eligibility for QA promotion
+        run: echo 'Security precheck passed; QA boundary test only. No artifacts copied.'
