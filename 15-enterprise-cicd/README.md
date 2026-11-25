@@ -293,3 +293,8 @@ Create enterprise-prod-source-read for existing production-promoter, Read only o
 User confirmed production source read permission configuration; effective access not yet tested.
 ## Step 10.30 — Production destination permission
 Create enterprise-prod-deploy for existing production-promoter on maven-prod-local and docker-prod-local, granting Read, Deploy/Cache and Annotate only. Delete/Overwrite and Manage disabled. Retain existing Generic permissions and production environment credentials. Configuration pending confirmation; effective access and existing token validity must be verified before promotion. No production artifact copy authorized by this step.
+
+## Step 10.30 result
+User confirmed production destination permission configuration; effective access pending verification.
+## Step 10.31 — Production access verification
+Created enterprise-production-access-verification.yml, manual main-only, protected production environment, existing JFROG_PROD_USER/TOKEN. Read-only Storage API checks expect HTTP 200 for Maven/Docker QA and PROD roots and 403 for both DEV roots. No writes or artifact promotion. This tests repository root access, not complete effective permissions or write boundaries; token validity and execution pending. Existing Generic permissions unchanged.
