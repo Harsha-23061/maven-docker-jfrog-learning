@@ -200,3 +200,8 @@ Updated enterprise-promotion-precheck.yml in commit c9c4946cf90b40cbe08496d1d115
 User confirmed creation of qa-promoter, instructed non-admin and no groups. Actual account settings not independently inspected. No token yet.
 ## Step 10.10 — Source read permissions
 Create enterprise-qa-source-read for libs-release-local and docker-trial, assigning qa-promoter Read only. This separates source consumption from publication and supports build-once promotion. Configuration pending confirmation. QA destination permissions and removal of maven-deployer QA write access remain pending; no effective isolation claimed.
+
+## Step 10.10 result
+User confirmed enterprise-qa-source-read setup. Effective permissions pending verification.
+## Step 10.11 — Transfer QA destination permissions
+Reuse enterprise-qa-promote scoped to maven-qa-local and docker-qa-local. Remove maven-deployer from this target and assign qa-promoter Read, Deploy/Cache, Annotate only; no Delete/Overwrite or Manage. Preserve unrelated permission targets. Intended separation: CI publishes source artifacts; QA identity reads source and writes QA. Other grants may still permit bypass, so effective permissions require verification. Change pending user confirmation.
