@@ -182,3 +182,8 @@ Create or reuse docker-qa-local, Docker local repository, description Security-v
 User confirmed Docker QA repository creation; settings not independently inspected.
 ## Step 10.5 — QA promotion permissions
 Create enterprise-qa-promote scoped to maven-qa-local and docker-qa-local, assigning maven-deployer Read, Deploy/Cache, Annotate only. Reuse existing identity for lab; dedicated protected QA identity preferable in production. This grants direct QA write access and therefore does not prevent bypass outside the planned workflow. Effective inherited permissions remain unaudited. No vulnerable artifact promotion authorized. Configuration pending confirmation.
+
+## Step 10.5 result
+User confirmed enterprise-qa-promote configuration; effective permissions not yet verified.
+## Step 10.6 — Verify QA read access
+Run jf rt curl -XGET "/api/storage/maven-qa-local" --server-id=jfrog-trial and jf rt curl -XGET "/api/storage/docker-qa-local" --server-id=jfrog-trial. Expect repository metadata without authorization errors. Read-only test; does not establish write permissions or prevent direct bypass. No vulnerable artifact copy. Results pending.
