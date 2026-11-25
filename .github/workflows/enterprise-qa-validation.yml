@@ -1,0 +1,49 @@
+name: Enterprise QA Validation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 10
+    env:
+      JFROG_USER: ${{ secrets.JFROG_QA_USER }}
+      JFROG_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+    steps:
+      - name: Validate promoted QA release
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=1.0.7-ci-45564602972-1
+          SHA=350d37a5fb616e0b79f1707adb79e5572e3d03f024240889cfbf79c1649b4ac6
+          DIGEST=sha256:085b09ef0029ef23062f729c0b262af5ff40e5a340ac904e91a4a8d41b892ccf
+          REGISTRY=trialgccoro.jfrog.io
+          BASE="https://$REGISTRY/artifactory"
+          ROOT="maven-qa-local/com/example/maven-docker-artifactory/$VERSION/maven-docker-artifactory-$VERSION"
+          api() { curl --fail --silent --show-error --max-time 60 --user "$JFROG_USER:$JFROG_TOKEN" "$@"; }
+          for ext in jar pom; do
+            api "$BASE/api/storage/$ROOT.$ext?properties" | jq -e '.properties.environment == ["qa"] and .properties["release.status"] == ["qa-pending"]'
+          done
+          api "$BASE/$ROOT.jar" -o app.jar
+          test "$(sha256sum app.jar | cut -d ' ' -f 1)" = "$SHA"
+          printf '%s' "$JFROG_TOKEN" | docker login "$REGISTRY" --username "$JFROG_USER" --password-stdin
+          trap 'docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+          IMAGE="$REGISTRY/docker-qa-local/enterprise-demo@$DIGEST"
+          docker pull "$IMAGE"
+          test "$(docker image inspect --format '{{.Config.User}}' "$IMAGE")" = "10001:10001"
+          CID=$(docker create "$IMAGE")
+          trap 'docker rm "$CID" >/dev/null 2>&1 || true; docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+          docker cp "$CID:/app/app.jar" container.jar
+          cmp app.jar container.jar
+          printf 'Hello and welcome!\ni = 1\ni = 2\ni = 3\ni = 4\ni = 5\n' > expected.txt
+          docker run --rm "$IMAGE" > actual.txt
+          diff -u expected.txt actual.txt
+          echo 'PASS: QA functional and integrity checks'
+          for ext in jar pom; do
+            api -X PUT "$BASE/api/storage/$ROOT.$ext?properties=release.status%3Dvalidated" >/dev/null
+            api "$BASE/api/storage/$ROOT.$ext?properties" | jq -e '.properties.environment == ["qa"] and .properties["release.status"] == ["validated"]'
+          done
+          echo 'PASS: QA Maven release status validated'
