@@ -138,3 +138,6 @@ Open Xray Watches > enterprise-docker-watch > Resources, add enterprise-release-
 User confirmed saving watch association for enterprise-release-ci; effective policy evaluation not yet verified.
 ## Step 9.3 — Manual security scan of existing combined build
 Run `jf build-scan "enterprise-release-ci" "45539352278-1" --rescan=true --fail=true --vuln=true --server-id=jfrog-trial` followed immediately by `Write-Host "Scan exit code: $LASTEXITCODE"` in PowerShell. Reuse existing build and identity, no rebuild or pipeline change. Vulnerability findings and exit code must be evaluated together; zero alone does not establish policy enforcement, especially given Phase 12 unresolved negative test. Results pending.
+
+### Step 9.3 result — scan execution passed, enforcement unverified
+User supplied partial scan table showing Low severity Ubuntu OS package findings and exit code 0. Full severity distribution and violation count not supplied. Zero exit code does not establish enforcement. Step 9.4: inspect existing build 45539352278-1 in Xray Scans List > Builds > enterprise-release-ci, record severity totals and policy violations before choosing a negative test. Do not lower policy threshold or rebuild yet.
