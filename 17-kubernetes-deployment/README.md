@@ -9,3 +9,6 @@ Attempt with 4096 MB rejected because Docker Desktop reported 3918 MB available.
 
 ## Step 17.3 — Namespace (pending user confirmation)
 `kubectl create namespace enterprise-prod` followed by `kubectl get namespace enterprise-prod`. Custom namespace for local production-style workload isolation; namespace alone is not a security boundary. Next: dedicated registry read-only authentication, then digest-pinned Job. No new application build or artifact publication required.
+
+## Steps 17.3–17.4 — Runtime identity and namespace
+User confirmed namespace creation and verification, creation of non-admin `kubernetes-puller` with no groups, and permission `kubernetes-prod-pull` granting Read only on `docker-prod-local` with include `**`. No deploy/cache, annotate, delete/overwrite or manage permissions requested. Effective access boundaries still pending independent verification. Step 17.4.3: generate user-scoped token `minikube-prod-registry-pull` for this identity, seven-day expiration and Artifactory service if selectable. Never commit or print token. Token generation pending user confirmation. Kubernetes registry credentials will be stored in a namespace-specific image pull secret.
