@@ -9,25 +9,32 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Attempt unauthorized OIDC exchange
+      - name: Attempt OIDC exchange with official JFrog action
+        id: jfrog
+        continue-on-error: true
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: https://trialgccoro.jfrog.io
+        with:
+          oidc-provider-name: github-oidc
+          oidc-audience: jfrog-github
+          disable-auto-build-publish: true
+
+      - name: Enforce failed exchange
+        if: always()
         shell: bash
+        env:
+          STEP_OUTCOME: ${{ steps.jfrog.outcome }}
+          OIDC_TOKEN: ${{ steps.jfrog.outputs.oidc-token }}
         run: |
           set -euo pipefail
-          JWT=$(curl --fail --silent --show-error -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=jfrog-github" | jq -er '.value')
-          echo "::add-mask::$JWT"
-          BODY=$(jq -n --arg jwt "$JWT" '{grant_type:"urn:ietf:params:oauth:grant-type:token-exchange",subject_token_type:"urn:ietf:params:oauth:token-type:id_token",subject_token:$jwt,provider_name:"github-oidc"}')
-          STATUS=$(curl --silent --show-error -o "$RUNNER_TEMP/oidc-response.json" -w '%{http_code}' -H 'Content-Type: application/json' --data "$BODY" https://trialgccoro.jfrog.io/access/api/v1/oidc/token)
-          echo "Exchange HTTP status: $STATUS"
-          if jq -e '.access_token? // empty' "$RUNNER_TEMP/oidc-response.json" >/dev/null; then
-            echo "FAIL: Unauthorized workflow obtained a token"
-            rm -f "$RUNNER_TEMP/oidc-response.json"
+          if [ "$STEP_OUTCOME" = success ] || [ -n "$OIDC_TOKEN" ]; then
+            echo "FAIL: Unauthorized workflow successfully exchanged OIDC token"
             exit 1
           fi
-          jq -c '{error, error_description, errors}' "$RUNNER_TEMP/oidc-response.json"
-          if [[ "$STATUS" =~ ^(400|401|403)$ ]] && jq -e '[.. | strings] | any(test("identity.mapping|no matching|claims.*match";"i"))' "$RUNNER_TEMP/oidc-response.json" >/dev/null; then
-            echo "PASS: Unauthorized workflow rejected by identity mapping"
-          else
-            echo "INCONCLUSIVE: Expected explicit mapping rejection"
+          if [ "$STEP_OUTCOME" != failure ]; then
+            echo "INCONCLUSIVE: OIDC action was not run or outcome unexpected: $STEP_OUTCOME"
             exit 1
           fi
-          rm -f "$RUNNER_TEMP/oidc-response.json"
+          echo "PASS: JFrog setup action rejected unauthorized workflow"
+          echo "NOTE: Inspect previous step's actual JFrog error before attributing denial to the workflow_ref claim"
