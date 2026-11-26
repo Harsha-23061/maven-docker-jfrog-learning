@@ -1,0 +1,180 @@
+
+name: Phase 19 - Enterprise DEV Promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Existing Release Bundle version
+        required: true
+        type: string
+        default: '1.0.8'
+
+      creation_run_id:
+        description: Successful Release Bundle creation run ID
+        required: true
+        type: string
+        default: '45823508305'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: enterprise-release-${{ inputs.release_version }}
+  cancel-in-progress: false
+
+env:
+  JFROG_URL: https://trialgccoro.jfrog.io
+  RELEASE_BUNDLE_NAME: enterprise-demo-release
+
+jobs:
+
+  verify-release:
+    name: Verify Release Creation
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    outputs:
+      release_version: ${{ steps.verify.outputs.release_version }}
+
+    steps:
+      - name: Verify successful release creation
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CREATION_RUN_ID: ${{ inputs.creation_run_id }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "$CREATION_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$CREATION_RUN_ID" \
+            > release-run.json
+
+          jq -e \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '
+            .status == "completed" and
+            .conclusion == "success" and
+            .head_branch == "main" and
+            .head_repository.full_name == $repo and
+            .path == ".github/workflows/enterprise-release-bundle.yml"
+            ' release-run.json
+
+          RUN_ATTEMPT=$(jq -r '.run_attempt' release-run.json)
+
+          gh run view "$CREATION_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --attempt "$RUN_ATTEMPT" \
+            --log > creation.log
+
+          grep -F "PASS: Source CI verification" creation.log
+          grep -F "PASS: Release Bundle creation" creation.log
+
+          # Restrict this initial promotion test to the
+          # previously verified release and creation run.
+          test "$CREATION_RUN_ID" = "45823508305"
+          test "$RUN_ATTEMPT" = "1"
+          test "$RELEASE_VERSION" = "1.0.8"
+
+          echo "release_version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "PASS: Release creation verification"
+          echo "Release Version: $RELEASE_VERSION"
+
+  promote-dev:
+    name: Promote Release Bundle to DEV
+    needs: verify-release
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 15
+
+    env:
+      RELEASE_VERSION: ${{ needs.verify-release.outputs.release_version }}
+
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: '2.77.0'
+          disable-auto-build-publish: true
+
+      - name: Configure DEV authentication
+        env:
+          JFROG_USER: ${{ secrets.JFROG_DEV_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_DEV_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "maven-deployer"
+
+          jf config add jfrog-dev \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id=jfrog-dev
+
+          echo "PASS: DEV authentication"
+
+      - name: Verify DEV repository access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for repo in libs-release-local docker-trial; do
+            jf rt curl -f -XGET \
+              "/api/storage/$repo" \
+              --server-id=jfrog-dev > /dev/null
+
+            echo "PASS: Read access to $repo"
+          done
+
+      - name: Promote Release Bundle to DEV
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Release Bundle: $RELEASE_BUNDLE_NAME"
+          echo "Release Version: $RELEASE_VERSION"
+          echo "Target Environment: DEV"
+
+          jf rbp "$RELEASE_BUNDLE_NAME" "$RELEASE_VERSION" DEV \
+            --server-id=jfrog-dev \
+            --promotion-type=copy \
+            --sync=true
+
+          echo "PASS: DEV promotion"
+
+      - name: Generate DEV promotion summary
+        shell: bash
+        run: |
+          {
+            echo "## Enterprise DEV Promotion"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "|---|---|"
+            echo "| Release Bundle | $RELEASE_BUNDLE_NAME |"
+            echo "| Release Version | $RELEASE_VERSION |"
+            echo "| Environment | DEV |"
+            echo "| Promotion Type | COPY |"
+            echo "| Maven Repository | libs-release-local |"
+            echo "| Docker Repository | docker-trial |"
+            echo "| Status | PROMOTED |"
+            echo ""
+            echo "DEV promotion completed successfully."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup DEV configuration
+        if: always()
+        run: jf config remove jfrog-dev --quiet || true
