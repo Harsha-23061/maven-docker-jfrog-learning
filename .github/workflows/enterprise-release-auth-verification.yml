@@ -1,0 +1,184 @@
+
+name: Phase 19 - Enterprise Release Authentication
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  JFROG_URL: https://trialgccoro.jfrog.io
+  BUILD_NAME: enterprise-release-ci
+  BUILD_NUMBER: '45636994469-1'
+
+jobs:
+
+  dev-authentication:
+    name: DEV Authentication
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 10
+
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: '2.77.0'
+          disable-auto-build-publish: true
+
+      - name: Verify DEV authentication
+        env:
+          JFROG_USER: ${{ secrets.JFROG_DEV_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_DEV_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "maven-deployer"
+
+          jf config add jfrog-dev \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id=jfrog-dev
+
+          jf rt curl -f -XGET \
+            "/api/build/$BUILD_NAME/$BUILD_NUMBER" \
+            --server-id=jfrog-dev > build-info.json
+
+          jq -e --arg name "$BUILD_NAME" \
+            --arg number "$BUILD_NUMBER" \
+            '.buildInfo.name == $name and .buildInfo.number == $number' \
+            build-info.json
+
+          echo "PASS: DEV authentication and Build Info access"
+
+      - name: Cleanup DEV configuration
+        if: always()
+        run: jf config remove jfrog-dev --quiet || true
+
+  qa-authentication:
+    name: QA Authentication
+    needs: dev-authentication
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 10
+
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: '2.77.0'
+          disable-auto-build-publish: true
+
+      - name: Verify QA authentication
+        env:
+          JFROG_USER: ${{ secrets.JFROG_QA_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "qa-promoter"
+
+          jf config add jfrog-qa \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id=jfrog-qa
+
+          for repo in maven-qa-local docker-qa-local; do
+            jf rt curl -f -XGET \
+              "/api/storage/$repo" \
+              --server-id=jfrog-qa > /dev/null
+
+            echo "PASS: Read access to $repo"
+          done
+
+          echo "PASS: QA authentication"
+
+      - name: Cleanup QA configuration
+        if: always()
+        run: jf config remove jfrog-qa --quiet || true
+
+  prod-authentication:
+    name: PROD Authentication
+    needs: qa-authentication
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: '2.77.0'
+          disable-auto-build-publish: true
+
+      - name: Verify PROD authentication
+        env:
+          JFROG_USER: ${{ secrets.JFROG_PROD_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_PROD_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "prod-promoter"
+
+          jf config add jfrog-prod \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id=jfrog-prod
+
+          for repo in maven-prod-local docker-prod-local; do
+            jf rt curl -f -XGET \
+              "/api/storage/$repo" \
+              --server-id=jfrog-prod > /dev/null
+
+            echo "PASS: Read access to $repo"
+          done
+
+          echo "PASS: PROD authentication"
+
+      - name: Cleanup PROD configuration
+        if: always()
+        run: jf config remove jfrog-prod --quiet || true
+
+  authentication-summary:
+    name: Authentication Summary
+    needs:
+      - dev-authentication
+      - qa-authentication
+      - prod-authentication
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate authentication summary
+        shell: bash
+        run: |
+          {
+            echo "## Enterprise Authentication Verification"
+            echo ""
+            echo "| Environment | Status |"
+            echo "|---|---|"
+            echo "| DEV | PASSED |"
+            echo "| QA | PASSED |"
+            echo "| PROD | PASSED |"
+            echo ""
+            echo "All environment authentication checks passed."
+          } >> "$GITHUB_STEP_SUMMARY"
