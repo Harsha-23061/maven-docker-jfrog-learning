@@ -133,9 +133,30 @@ jobs:
         run: |
           set -euo pipefail
 
-          test -n "$JFROG_USER"
-          test -n "$JFROG_TOKEN"
-          test "$JFROG_USER" = "prod-promoter"
+          echo "Starting production authentication diagnostics"
+
+          if [[ -z "$JFROG_USER" ]]; then
+            echo "::error::JFROG_PROD_USER is missing or empty"
+            exit 1
+          fi
+
+          echo "PASS: Production username secret is available"
+
+          if [[ -z "$JFROG_TOKEN" ]]; then
+            echo "::error::JFROG_PROD_TOKEN is missing or empty"
+            exit 1
+          fi
+
+          echo "PASS: Production token secret is available"
+
+          if [[ "$JFROG_USER" != "prod-promoter" ]]; then
+            echo "::error::JFROG_PROD_USER does not match expected identity"
+            exit 1
+          fi
+
+          echo "PASS: Production username matches expected identity"
+
+          echo "Configuring production JFrog CLI"
 
           jf config add jfrog-prod \
             --url="$JFROG_URL" \
@@ -143,9 +164,15 @@ jobs:
             --access-token="$JFROG_TOKEN" \
             --interactive=false
 
+          echo "PASS: Production JFrog CLI configured"
+
           jf rt ping --server-id=jfrog-prod
 
+          echo "PASS: Production JFrog connectivity"
+
           for repo in maven-prod-local docker-prod-local; do
+            echo "Verifying read access to $repo"
+
             jf rt curl -f -XGET \
               "/api/storage/$repo" \
               --server-id=jfrog-prod > /dev/null
