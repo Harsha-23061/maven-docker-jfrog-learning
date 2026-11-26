@@ -1,0 +1,277 @@
+
+name: Phase 19 - Enterprise QA Promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Existing DEV Release Bundle version
+        required: true
+        type: string
+        default: '1.0.8'
+
+      dev_run_id:
+        description: Successful DEV promotion run ID
+        required: true
+        type: string
+        default: '45823906662'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: enterprise-release-${{ inputs.release_version }}
+  cancel-in-progress: false
+
+env:
+  JFROG_URL: https://trialgccoro.jfrog.io
+  RELEASE_BUNDLE_NAME: enterprise-demo-release
+  BUILD_NAME: enterprise-release-ci
+  BUILD_NUMBER: '45636994469-1'
+  ARTIFACT_VERSION: '1.0.7-ci-45636994469-1'
+
+  EXPECTED_JAR_SHA256: '84402355a1defeca3e5b9ff2ce64949692cf95c5879ae789741dc50d80c2d3b3'
+  EXPECTED_POM_SHA256: '38a9aa015ab72e6f997def9e135de50ec255b2dffad445c12830442bd3134446'
+  EXPECTED_DOCKER_DIGEST: 'sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3'
+
+jobs:
+
+  verify-dev:
+    name: Verify DEV Promotion
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    outputs:
+      release_version: ${{ steps.verify.outputs.release_version }}
+
+    steps:
+      - name: Verify successful DEV promotion
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEV_RUN_ID: ${{ inputs.dev_run_id }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "$DEV_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+          test "$DEV_RUN_ID" = "45823906662"
+          test "$RELEASE_VERSION" = "1.0.8"
+
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$DEV_RUN_ID" \
+            > dev-run.json
+
+          jq -e \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '
+            .status == "completed" and
+            .conclusion == "success" and
+            .head_branch == "main" and
+            .head_repository.full_name == $repo and
+            .run_attempt == 1 and
+            .path == ".github/workflows/enterprise-release-dev-promotion.yml"
+            ' dev-run.json
+
+          echo "release_version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
+          echo "PASS: DEV promotion verification"
+          echo "Release Version: $RELEASE_VERSION"
+
+  promote-qa:
+    name: Promote and Validate QA
+    needs: verify-dev
+    runs-on: ubuntu-latest
+    environment: qa
+    timeout-minutes: 20
+
+    env:
+      RELEASE_VERSION: ${{ needs.verify-dev.outputs.release_version }}
+
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: '2.77.0'
+          disable-auto-build-publish: true
+
+      - name: Configure QA authentication
+        env:
+          JFROG_USER: ${{ secrets.JFROG_QA_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "qa-promoter"
+
+          jf config add jfrog-qa \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id=jfrog-qa
+
+          echo "PASS: QA authentication"
+
+      - name: Verify QA repository access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for repo in maven-qa-local docker-qa-local; do
+            jf rt curl -f -XGET \
+              "/api/storage/$repo" \
+              --server-id=jfrog-qa > /dev/null
+
+            echo "PASS: Read access to $repo"
+          done
+
+      - name: Promote Release Bundle to QA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jf rbp "$RELEASE_BUNDLE_NAME" "$RELEASE_VERSION" QA \
+            --server-id=jfrog-qa \
+            --promotion-type=copy \
+            --sync=true
+
+          echo "PASS: QA promotion"
+
+      - name: Verify Maven artifact integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p evidence
+
+          MAVEN_PATH="com/example/maven-docker-artifactory/$ARTIFACT_VERSION"
+          ARTIFACT_NAME="maven-docker-artifactory-$ARTIFACT_VERSION"
+
+          jf rt curl -f -XGET \
+            "/api/storage/maven-qa-local/$MAVEN_PATH/$ARTIFACT_NAME.jar" \
+            --server-id=jfrog-qa > evidence/qa-jar.json
+
+          jf rt curl -f -XGET \
+            "/api/storage/maven-qa-local/$MAVEN_PATH/$ARTIFACT_NAME.pom" \
+            --server-id=jfrog-qa > evidence/qa-pom.json
+
+          ACTUAL_JAR_SHA256=$(jq -er '.checksums.sha256' evidence/qa-jar.json)
+          ACTUAL_POM_SHA256=$(jq -er '.checksums.sha256' evidence/qa-pom.json)
+
+          echo "Expected JAR SHA256: $EXPECTED_JAR_SHA256"
+          echo "Actual JAR SHA256:   $ACTUAL_JAR_SHA256"
+
+          test "$ACTUAL_JAR_SHA256" = "$EXPECTED_JAR_SHA256"
+
+          echo "PASS: Maven JAR checksum validation"
+
+          echo "Expected POM SHA256: $EXPECTED_POM_SHA256"
+          echo "Actual POM SHA256:   $ACTUAL_POM_SHA256"
+
+          test "$ACTUAL_POM_SHA256" = "$EXPECTED_POM_SHA256"
+
+          echo "PASS: Maven POM checksum validation"
+
+      - name: Verify Docker image digest
+        env:
+          JFROG_USER: ${{ secrets.JFROG_QA_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_QA_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REGISTRY="${JFROG_URL#https://}"
+          IMAGE="$REGISTRY/docker-qa-local/enterprise-demo:$ARTIFACT_VERSION"
+
+          trap 'docker logout "$REGISTRY" >/dev/null 2>&1 || true' EXIT
+
+          printf '%s' "$JFROG_TOKEN" | docker login "$REGISTRY" \
+            --username "$JFROG_USER" \
+            --password-stdin
+
+          docker buildx imagetools inspect "$IMAGE" \
+            > evidence/qa-docker-inspect.txt
+
+          cat evidence/qa-docker-inspect.txt
+
+          ACTUAL_DIGEST=$(awk '$1 == "Digest:" {print $2; exit}' \
+            evidence/qa-docker-inspect.txt)
+
+          echo "Expected Docker Digest: $EXPECTED_DOCKER_DIGEST"
+          echo "Actual Docker Digest:   $ACTUAL_DIGEST"
+
+          test "$ACTUAL_DIGEST" = "$EXPECTED_DOCKER_DIGEST"
+
+          echo "PASS: Docker image digest validation"
+
+      - name: Generate QA validation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jq -n \
+            --arg bundle "$RELEASE_BUNDLE_NAME" \
+            --arg version "$RELEASE_VERSION" \
+            --arg build "$BUILD_NUMBER" \
+            --arg artifact_version "$ARTIFACT_VERSION" \
+            --arg jar "$EXPECTED_JAR_SHA256" \
+            --arg pom "$EXPECTED_POM_SHA256" \
+            --arg docker "$EXPECTED_DOCKER_DIGEST" \
+            --arg run "$GITHUB_RUN_ID" \
+            '{
+              release_bundle: $bundle,
+              release_version: $version,
+              build_number: $build,
+              artifact_version: $artifact_version,
+              environment: "QA",
+              promotion: "PASSED",
+              jar_sha256: $jar,
+              pom_sha256: $pom,
+              docker_digest: $docker,
+              github_run_id: $run,
+              integrity_validation: "PASSED"
+            }' > evidence/qa-validation.json
+
+          cat evidence/qa-validation.json
+
+      - name: Upload QA validation evidence
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-release-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Generate QA promotion summary
+        shell: bash
+        run: |
+          {
+            echo "## Enterprise QA Promotion"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "|---|---|"
+            echo "| Release Bundle | $RELEASE_BUNDLE_NAME |"
+            echo "| Release Version | $RELEASE_VERSION |"
+            echo "| Build Number | $BUILD_NUMBER |"
+            echo "| Environment | QA |"
+            echo "| Promotion | PASSED |"
+            echo "| Maven JAR SHA256 | PASSED |"
+            echo "| Maven POM SHA256 | PASSED |"
+            echo "| Docker Image Digest | PASSED |"
+            echo "| QA Integrity Validation | PASSED |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup QA configuration
+        if: always()
+        run: jf config remove jfrog-qa --quiet || true
