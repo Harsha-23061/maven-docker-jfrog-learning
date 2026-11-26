@@ -1,0 +1,209 @@
+
+name: Phase 19 - Enterprise Release Bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Successful Enterprise CI run ID
+        required: true
+        type: string
+        default: '45636994469'
+
+      ci_run_attempt:
+        description: CI run attempt
+        required: true
+        type: string
+        default: '1'
+
+      release_version:
+        description: New Release Bundle version
+        required: true
+        type: string
+        default: '1.0.8'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: enterprise-release-${{ inputs.release_version }}
+  cancel-in-progress: false
+
+env:
+  JFROG_URL: https://trialgccoro.jfrog.io
+  BUILD_NAME: enterprise-release-ci
+  RELEASE_BUNDLE_NAME: enterprise-demo-release
+
+jobs:
+
+  verify-ci:
+    name: Verify Source CI
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    outputs:
+      build_number: ${{ steps.verify.outputs.build_number }}
+      release_version: ${{ steps.verify.outputs.release_version }}
+      commit_sha: ${{ steps.verify.outputs.commit_sha }}
+
+    steps:
+      - name: Verify successful CI run
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_RUN_ID: ${{ inputs.ci_run_id }}
+          CI_RUN_ATTEMPT: ${{ inputs.ci_run_attempt }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "$CI_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$CI_RUN_ATTEMPT" =~ ^[1-9][0-9]*$ ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$CI_RUN_ID" \
+            > ci-run.json
+
+          jq -e \
+            --arg attempt "$CI_RUN_ATTEMPT" \
+            --arg repo "$GITHUB_REPOSITORY" \
+            '
+            .status == "completed" and
+            .conclusion == "success" and
+            .head_branch == "main" and
+            .head_repository.full_name == $repo and
+            (.run_attempt | tostring) == $attempt and
+            (
+              .path == ".github/workflows/enterprise-ci.yml" or
+              .path == ".github/workflows/enterprise-ci-oidc.yml"
+            )
+            ' ci-run.json
+
+          BUILD_NUMBER="${CI_RUN_ID}-${CI_RUN_ATTEMPT}"
+          COMMIT_SHA=$(jq -r '.head_sha' ci-run.json)
+
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "release_version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+
+          echo "PASS: Source CI verification"
+          echo "Build Number: $BUILD_NUMBER"
+          echo "Release Version: $RELEASE_VERSION"
+          echo "Commit SHA: $COMMIT_SHA"
+
+  create-release-bundle:
+    name: Create Release Bundle v2
+    needs: verify-ci
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 15
+
+    env:
+      BUILD_NUMBER: ${{ needs.verify-ci.outputs.build_number }}
+      RELEASE_VERSION: ${{ needs.verify-ci.outputs.release_version }}
+
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: '2.77.0'
+          disable-auto-build-publish: true
+
+      - name: Configure DEV authentication
+        env:
+          JFROG_USER: ${{ secrets.JFROG_DEV_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_DEV_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$JFROG_USER"
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "maven-deployer"
+
+          jf config add jfrog-dev \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id=jfrog-dev
+
+      - name: Verify JFrog Build Info
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jf rt curl -f -XGET \
+            "/api/build/$BUILD_NAME/$BUILD_NUMBER" \
+            --server-id=jfrog-dev > build-info.json
+
+          jq -e \
+            --arg name "$BUILD_NAME" \
+            --arg number "$BUILD_NUMBER" \
+            '
+            .buildInfo.name == $name and
+            .buildInfo.number == $number and
+            (.buildInfo.modules | length) > 0
+            ' build-info.json
+
+          MAVEN_COUNT=$(jq '
+            [.buildInfo.modules[] |
+            select(.id == "maven-docker-artifactory") |
+            .artifacts[]] | length
+            ' build-info.json)
+
+          DOCKER_COUNT=$(jq '
+            [.buildInfo.modules[] |
+            select(.type == "docker") |
+            .artifacts[]] | length
+            ' build-info.json)
+
+          TOTAL_COUNT=$((MAVEN_COUNT + DOCKER_COUNT))
+
+          test "$MAVEN_COUNT" -eq 2
+          test "$DOCKER_COUNT" -gt 0
+
+          echo "Maven artifacts: $MAVEN_COUNT"
+          echo "Docker artifacts: $DOCKER_COUNT"
+          echo "Total artifacts: $TOTAL_COUNT"
+
+          echo "PASS: Build Info verification"
+
+      - name: Create immutable Release Bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jf rbc "$RELEASE_BUNDLE_NAME" "$RELEASE_VERSION" \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER" \
+            --server-id=jfrog-dev \
+            --sync=true
+
+          echo "PASS: Release Bundle creation"
+
+      - name: Generate release summary
+        shell: bash
+        run: |
+          {
+            echo "## Enterprise Release Bundle"
+            echo ""
+            echo "| Parameter | Value |"
+            echo "|---|---|"
+            echo "| Bundle | $RELEASE_BUNDLE_NAME |"
+            echo "| Version | $RELEASE_VERSION |"
+            echo "| Build Name | $BUILD_NAME |"
+            echo "| Build Number | $BUILD_NUMBER |"
+            echo "| Status | CREATED |"
+            echo ""
+            echo "Release Bundle creation completed successfully."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Cleanup DEV configuration
+        if: always()
+        run: jf config remove jfrog-dev --quiet || true
