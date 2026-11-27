@@ -1,0 +1,61 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: enterprise-job-execution-policy
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["jobs"]
+
+  matchConditions:
+    - name: enterprise-deployer
+      expression: "request.userInfo.username == 'system:serviceaccount:enterprise-prod:enterprise-deployer'"
+
+    - name: production-namespace
+      expression: "request.namespace == 'enterprise-prod'"
+
+  variables:
+    - name: pod
+      expression: object.spec.template.spec
+
+  validations:
+    - expression: "has(object.spec.parallelism) && object.spec.parallelism == 1"
+      message: "Job parallelism must be one"
+
+    - expression: "has(object.spec.completions) && object.spec.completions == 1"
+      message: "Job completions must be one"
+
+    - expression: "has(object.spec.backoffLimit) && object.spec.backoffLimit == 0"
+      message: "Job retries are not allowed"
+
+    - expression: "has(object.spec.activeDeadlineSeconds) && object.spec.activeDeadlineSeconds > 0 && object.spec.activeDeadlineSeconds <= 180"
+      message: "Job deadline must not exceed 180 seconds"
+
+    - expression: "variables.pod.restartPolicy == 'Never'"
+      message: "Pod restart policy must be Never"
+
+    - expression: "has(variables.pod.enableServiceLinks) && variables.pod.enableServiceLinks == false"
+      message: "Service links must be disabled"
+
+    - expression: "!has(variables.pod.nodeName) || variables.pod.nodeName == ''"
+      message: "Direct node assignment is not allowed"
+
+    - expression: "!has(variables.pod.nodeSelector) || size(variables.pod.nodeSelector) == 0"
+      message: "Custom node selectors are not allowed"
+
+    - expression: "!has(variables.pod.affinity)"
+      message: "Custom node affinity is not allowed"
+
+    - expression: "!has(object.metadata.ownerReferences) || size(object.metadata.ownerReferences) == 0"
+      message: "Custom Job owner references are not allowed"
+
+    - expression: "!has(object.metadata.finalizers) || size(object.metadata.finalizers) == 0"
+      message: "Custom Job finalizers are not allowed"
+
+    - expression: "variables.pod.containers.all(c, !has(c.ports) || c.ports.all(p, !has(p.hostPort) || p.hostPort == 0))"
+      message: "Host ports are not allowed"

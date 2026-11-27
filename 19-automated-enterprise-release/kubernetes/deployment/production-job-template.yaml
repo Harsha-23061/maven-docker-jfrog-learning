@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: __JOB_NAME__
+  namespace: enterprise-prod
+  labels:
+    app.kubernetes.io/name: enterprise-demo
+    app.kubernetes.io/part-of: enterprise-release
+    app.kubernetes.io/version: "__RELEASE_VERSION__"
+spec:
+  completions: 1
+  parallelism: 1
+  backoffLimit: 0
+  activeDeadlineSeconds: 180
+  template:
+    metadata:
+      labels:
+        app: enterprise-demo
+        app.kubernetes.io/part-of: enterprise-release
+    spec:
+      serviceAccountName: enterprise-runtime
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      enableServiceLinks: false
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+
+      imagePullSecrets:
+        - name: jfrog-registry-secret
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: enterprise-demo
+          image: __APPROVED_IMAGE__
+          imagePullPolicy: Always
+
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
