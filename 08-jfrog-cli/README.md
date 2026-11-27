@@ -114,3 +114,25 @@ On 2026-11-24 at 15:27, user supplied CLI output confirming upload to `generic-d
 
 ## Phase completion
 User confirmed generic artifact upload and UI verification. Phase 08 complete based on user confirmation; exact upload output not supplied.
+
+## Final documentation audit
+
+Status: JFrog CLI practical exercise completed.
+
+Covered operations:
+
+- CLI installation and version verification.
+- Server configuration aliases.
+- Authentication and connectivity troubleshooting.
+- Artifact search.
+- Artifact download.
+- Generic repository configuration.
+- Generic artifact upload.
+
+Actual generic upload evidence recorded success 1, failure 0.
+
+Some earlier connectivity, search and download results were
+user-confirmed without complete command output.
+
+All dedicated JFrog CLI configurations were removed
+during final cleanup. The CLI executable was retained.

@@ -21,3 +21,27 @@ Java 17 application built with Maven, packaged in a multi-stage Docker image, an
 - Both release scripts increment `pom.xml` **before** building. On failure, inspect the version and published artifacts before retrying.
 - A Docker cache hit can skip the Maven deploy instruction. For production CI/CD, decouple artifact deployment from image build.
 - Scope Artifactory deploy permissions to authorized identities and repositories; see the second exercise.
+
+## Final documentation audit
+
+Status: Core practical exercise completed.
+
+- Java 17 and Maven application build.
+- Multi-stage Docker packaging.
+- Maven artifact deployment to Artifactory.
+- PowerShell and Bash release automation.
+- JUnit automated test now available in
+  src/test/java/com/example/MainTest.java.
+- The test verifies the welcome message and sequence from 1 to 5.
+
+Additional learning resources:
+
+- [Complete Word guide](./Maven_Docker_JFrog_Complete_Guide.docx)
+- [Release scripts archive](./Maven_Docker_JFrog_Scripts.zip)
+- [PowerShell release script](./release.ps1)
+- [Bash release script](./release.sh)
+- [Maven POM](./pom.xml)
+- [Dockerfile](./Dockerfile)
+
+The committed source is a reconstructed sample.
+The Word guide and ZIP contents require separate review.

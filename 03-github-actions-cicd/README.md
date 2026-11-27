@@ -32,7 +32,7 @@ Go to **Actions → Exercise 03 - JFrog Deploy → Run workflow → main → Run
 - The token is scoped to the deployment step, and the workflow does not print its value.
 - This is a learning exercise, not a production release pipeline. Consider GitHub environments with required reviewers, pinned action commit SHAs, token rotation, and artifact provenance before production use.
 - The committed Exercise 01 Java source and POM were reconstructed samples and may differ from the original local IntelliJ project.
-- The Maven sample currently has no automated tests; successful `verify` does not establish functional test coverage.
+- At the time of the original exercise, the Maven sample had no automated tests. The current repository includes a JUnit test; see the final documentation audit below.
 - Earlier CI screenshots showed warnings about the v4 checkout/setup-java actions. Updating these dependencies is separate follow-up work.
 
 ## Verified CD execution — 20 November 2026
@@ -48,3 +48,21 @@ This confirms successful execution of the configured deployment workflow. **Inde
 3. Repository secret **names only**.
 4. Deployment workflow success showing uploaded Maven version.
 5. Artifactory artifact listing for the published version — verified by screenshot (20 November 2026).
+
+## Final documentation audit
+
+Status: Maven CI/CD practical exercise completed.
+
+- GitHub Actions Maven build verified.
+- Manual JFrog deployment verified.
+- Published Maven version confirmed in Artifactory.
+- Unique CI version identifiers prevent accidental version reuse.
+
+Automated testing update:
+
+The current repository contains a JUnit MainTest.java test.
+It validates the application's expected console output.
+The earlier statement about missing automated tests describes
+the historical state of the project, not its current source.
+
+Refer to Phase 15 and Phase 16 for enterprise CI/CD and OIDC.

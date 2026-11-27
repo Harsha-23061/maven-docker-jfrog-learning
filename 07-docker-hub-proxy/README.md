@@ -60,3 +60,25 @@ In Application > Artifactory > Artifacts, inspect docker-hub-remote-cache for ng
 
 ## Completion
 User confirmed inspecting the Docker server-side cache. Phase 07 is complete based on user confirmation of the external image pull and cache inspection. Continue to JFrog CLI.
+
+## Final documentation audit
+
+Status: Docker proxy and caching exercise completed
+based on user-confirmed pull and cache inspection.
+
+Configured repositories:
+
+- docker-trial
+- docker-hub-remote
+- docker-virtual
+
+Demonstrated image:
+
+trialgccoro.jfrog.io/docker-virtual/nginx:alpine
+
+The Docker Engine connectivity issue was resolved before
+the user reported successful image retrieval.
+
+Full pull logs were not retained in this guide.
+Offline availability and upstream access enforcement
+were not independently tested.

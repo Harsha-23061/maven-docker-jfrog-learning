@@ -83,3 +83,24 @@ No passwords, access tokens, or sensitive environment variable values are includ
 ## Next hands-on step
 
 Inspect the saved JFrog permission target and effective group permissions. Then perform a controlled negative authorization test using a separate safe test repository, not an existing published release.
+
+## Final documentation audit
+
+Status: Core authentication and deployment exercise completed.
+
+Verified:
+
+- Dedicated non-admin deployment identity.
+- Access-token authentication.
+- Successful Maven deployment to libs-release-local.
+
+Outstanding:
+
+- Independent effective-permission audit.
+- Controlled unauthorized repository deployment test.
+- Existing artifact overwrite denial test.
+- Remote token revocation confirmation.
+
+Later phases introduce additional permissions for Build Info,
+artifact annotation, security scanning and release promotion.
+Do not assume the initial permission target covers all later phases.
