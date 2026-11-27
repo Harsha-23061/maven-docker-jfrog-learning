@@ -39,3 +39,21 @@ Repository creation is user-confirmed; dependency resolution and caching are not
 
 ## Master project roadmap
 Reuse completed exercises 01–04 (Maven, Docker, permissions, CI/CD). Continue with dependency resolution, Docker proxy, CLI, Build Info, environment strategy, Xray, policies, REST API/AQL, promotion, automated CI/CD, OIDC, Kubernetes, rollback, retention, monitoring and enterprise administration. Trial-dependent features are subject to entitlement. Capture explanations, configurations, commands, troubleshooting, verification and interview notes in each phase.
+
+## Final documentation audit
+
+Status: Remote and virtual Maven repository exercise completed.
+
+Configured repositories:
+
+- libs-release-local
+- maven-central-remote
+- maven-virtual
+
+Dependency resolution through maven-virtual was subsequently
+verified in Phase 06 using an isolated Maven dependency cache.
+
+The user also confirmed server-side remote cache inspection.
+
+See [Phase 06](../06-maven-dependency-resolution)
+for configuration, build commands and verification evidence.

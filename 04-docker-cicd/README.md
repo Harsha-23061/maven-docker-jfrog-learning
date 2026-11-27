@@ -105,3 +105,23 @@ i = 5
 ```
 
 This verifies that the Java application in the Docker image executes as expected. Exercise 04's manual CI/CD build, registry push, pull, and local runtime checks are complete. GitHub Actions workflow is manually triggered, not automatically published on every push.
+
+## Final documentation audit
+
+Status: Docker CI/CD practical exercise completed.
+
+- Docker image build completed.
+- GitHub Actions registry publishing completed.
+- Published image verified in Artifactory.
+- Registry authentication issue resolved.
+- Local image pull reported successful.
+- Runtime output verified.
+
+Verified image:
+
+trialgccoro.jfrog.io/docker-trial/maven-docker-demo:ci-44788136694-4
+
+Earlier pending notes describe historical milestones.
+The final runtime verification supersedes those pending notes.
+
+Refer to Phase 15 for the enterprise Docker pipeline.

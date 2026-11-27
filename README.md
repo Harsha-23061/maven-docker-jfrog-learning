@@ -147,7 +147,7 @@ and three additional Docker index digest checks.
 | Medium | 54 | 55 |
 | Low | 4 | 4 |
 
-The configured gate blocked High and Critical vulnerabilities.
+The independent severity gate was configured to reject High and Critical vulnerabilities; the successful candidate contained none. Native Xray build-policy rejection remained unresolved in Phase 12.
 Medium and Low findings remained and require remediation or
 documented risk acceptance in a real production environment.
 
@@ -269,3 +269,10 @@ commands, configuration examples and exercise results.
 Documentation auditing must verify each phase against the available
 source files, workflow definitions and recorded evidence.
 
+
+## 15. Supporting documentation
+
+- [Troubleshooting and recovery](./docs/TROUBLESHOOTING.md)
+- [Backup and cleanup](./docs/BACKUP-AND-CLEANUP.md)
+
+All 19 phase README files have final status summaries. Relative Markdown links in the phase guides were checked against the repository inventory. Full command execution, Word guide and ZIP archive review, and fresh-environment reproduction remain outstanding.

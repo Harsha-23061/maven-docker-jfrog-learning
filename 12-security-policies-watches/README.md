@@ -200,3 +200,7 @@ User confirmed revocation of temporary administrator token. Run `jf config remov
 
 ## Phase 12 closure
 Step 49 verified: user confirmed removal and config show lists only jfrog-trial, maven-deployer, default=true. Temporary token revoked and policy restored to High per user confirmation. Phase closed for learning progression with unresolved build-level enforcement; negative test returned zero exit despite detected vulnerabilities at temporary Low threshold. Do not treat green scan as production approval. Revisit enforcement before final production deployment.
+
+## Final documentation audit
+
+Native build-policy rejection remains unresolved. Later enterprise workflows independently parse structured Xray vulnerability results and reject High/Critical findings or invalid responses. This compensating lab control does not establish native watch enforcement or complete scan coverage. See [Phase 15](../15-enterprise-cicd) and [Phase 19](../19-automated-enterprise-release).

@@ -26,3 +26,16 @@ UI verified bundle 1.0.1 promoted to QA at 2026-11-25 21:21:28 +0530, size 95.85
 
 ## Steps 18.25–18.33 — QA validation and production artifact promotion
 User confirmed DEV/QA Maven checksum comparison and Docker tag inspection; exact comparison values not supplied. QA Docker pull by digest `sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3` succeeded, `docker run --rm` emitted `Hello and welcome!` and `i = 1` through `i = 5`, exit code 0. Native RLM QA promotion lacked custom QA properties, so dedicated `qa-promoter` CLI identity annotated both Maven QA JAR and POM `environment=qa;release.status=validated`; each command 1 success 0 failures, search verified both. Parallel workflow `.github/workflows/enterprise-production-promotion-v101.yml` created in commit `4932b525fd8bd3113147fe4922b7c98124e7f0aa` rather than mutating old successful workflow. Actual run [45651231224](https://github.com/Harsha-23061/maven-docker-jfrog-learning/actions/runs/45651231224): security-precheck job 139335970220 success and independent Xray exact-build scan PASS; production-promotion job 139336119377 success following protected environment controls. Logs verify destination checks, source/target Docker digest identical `sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3`, QA-to-PROD Maven JAR/POM copies, PROD image smoke and final `PASS: QA to PROD promotion and smoke test without rebuild`. Artifacts `prod-promotion-xray-45651231224-1` id 15040736419, `prod-copy-check-45651231224-1` id 15040156699, seven-day retention configured. Build `enterprise-release-ci/45636994469-1`, version `1.0.7-ci-45636994469-1`, JAR SHA `84402355a1defeca3e5b9ff2ce64949692cf95c5879ae789741dc50d80c2d3b3`, POM SHA `38a9aa015ab72e6f997def9e135de50ec255b2dffad445c12830442bd3134446`. This is protected ARTIFACT promotion, NOT native RLM Bundle promotion to PROD. Kubernetes release1.0.1 deployment and rollback not yet performed. Lab only.
+
+## Final documentation audit
+
+Subsequent lab execution created enterprise-demo-release version 1.0.7 from enterprise-release-ci/45636994469-1, promoted DEV/QA/PROD with native bundle copy, and exercised local deployment and rollback. Historical version 1.0.1 notes above describe earlier milestones. Example CLI commands (historical, do not rerun against existing versions):
+
+```powershell
+jf rbc enterprise-demo-release 1.0.7 --build-name=enterprise-release-ci --build-number=45636994469-1 --server-id=jfrog-trial --sync=true
+jf rbp enterprise-demo-release 1.0.7 DEV --server-id=jfrog-trial --promotion-type=copy --sync=true
+jf rbp enterprise-demo-release 1.0.7 QA --server-id=jfrog-qa --promotion-type=copy --sync=true
+jf rbp enterprise-demo-release 1.0.7 PROD --server-id=jfrog-prod --promotion-type=copy --sync=true
+```
+
+Use separate authorized identities and approval/security checks before each promotion. See [Phase 19](../19-automated-enterprise-release) for automated release 1.0.8 and rollback controls. Batch rollback reruns an older image; it does not undo side effects.
