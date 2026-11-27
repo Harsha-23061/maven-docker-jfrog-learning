@@ -402,17 +402,58 @@ try {
 
     $Accepted = $false
 
-    for ($Attempt = 1; $Attempt -le 15; $Attempt++) {
+    $PreviousErrorPreference = $ErrorActionPreference
 
-        $Result = & kubectl @KubeArgs create `
-            --dry-run=server -f $ManifestFile 2>&1
+    try {
 
-        if ($LASTEXITCODE -eq 0) {
-            $Accepted = $true
-            break
+        $ErrorActionPreference = "Continue"
+
+        for ($Attempt = 1; $Attempt -le 30; $Attempt++) {
+
+            Write-Host "Admission validation attempt $Attempt/30"
+
+            $Result = & kubectl @KubeArgs create `
+                --dry-run=server -f $ManifestFile 2>&1
+
+            $ExitCode = $LASTEXITCODE
+
+            $ResultText = $Result -join "`n"
+
+            Add-Content `
+                "$RunRoot/admission-retry.log" `
+                "Attempt $Attempt - ExitCode $ExitCode"
+
+            Add-Content `
+                "$RunRoot/admission-retry.log" `
+                $ResultText
+
+            if ($ExitCode -eq 0) {
+
+                $Accepted = $true
+
+                Write-Host $ResultText
+
+                break
+            }
+
+            if (
+                $ResultText -notmatch
+                    "enterprise-deployment-security" -or
+                $ResultText -notmatch
+                    "Only the approved production image digest is allowed"
+            ) {
+                throw "Unexpected admission error: $ResultText"
+            }
+
+            Write-Host "Waiting for admission policy propagation..."
+
+            Start-Sleep -Seconds 3
         }
 
-        Start-Sleep -Seconds 2
+    }
+    finally {
+
+        $ErrorActionPreference = $PreviousErrorPreference
     }
 
     if (-not $Accepted) {
@@ -553,3 +594,4 @@ finally {
         Write-Host "Evidence directory: $RunRoot"
     }
 }
+
