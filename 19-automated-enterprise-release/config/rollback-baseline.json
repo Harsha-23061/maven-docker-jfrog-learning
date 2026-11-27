@@ -1,0 +1,12 @@
+{
+    "source_release":  "1.0.8",
+    "namespace":  "enterprise-prod",
+    "current_image":  "trialgccoro.jfrog.io/docker-prod-local/enterprise-demo@sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3",
+    "rollback_image":  "trialgccoro.jfrog.io/docker-prod-local/enterprise-demo@sha256:085b09ef0029ef23062f729c0b262af5ff40e5a340ac904e91a4a8d41b892ccf",
+    "historical_job":  "enterprise-demo-rollback-107",
+    "rollback_job":  "enterprise-demo-rollback-1-0-8",
+    "policy_name":  "enterprise-deployment-security",
+    "expected_user":  "10001:10001",
+    "maximum_critical":  0,
+    "maximum_high":  0
+}
