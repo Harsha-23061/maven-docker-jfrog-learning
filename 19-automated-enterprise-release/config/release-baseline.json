@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "release": {
+    "bundle_name": "enterprise-demo-release",
+    "bundle_version": "1.0.8",
+    "artifact_version": "1.0.7-ci-45636994469-1"
+  },
+  "source_build": {
+    "name": "enterprise-release-ci",
+    "number": "45636994469-1",
+    "git_commit": "72470a9236a03aa1eca50b0dc5b480ce19d24d05",
+    "branch": "main",
+    "ci_run_id": "45636994469",
+    "ci_run_attempt": 1
+  },
+  "github": {
+    "repository": "Harsha-23061/maven-docker-jfrog-learning",
+    "release_creation_run_id": "45823508305",
+    "dev_promotion_run_id": "45823906662",
+    "qa_promotion_run_id": "45824284048",
+    "production_promotion_run_id": "45826565840",
+    "production_promotion_run_attempt": 1
+  },
+  "jfrog": {
+    "url": "https://trialgccoro.jfrog.io",
+    "registry": "trialgccoro.jfrog.io"
+  },
+  "maven": {
+    "group_id": "com.example",
+    "artifact_id": "maven-docker-artifactory",
+    "repository_path": "com/example/maven-docker-artifactory",
+    "jar_sha256": "84402355a1defeca3e5b9ff2ce64949692cf95c5879ae789741dc50d80c2d3b3",
+    "pom_sha256": "38a9aa015ab72e6f997def9e135de50ec255b2dffad445c12830442bd3134446"
+  },
+  "docker": {
+    "image_name": "enterprise-demo",
+    "digest": "sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3",
+    "platform": "linux/amd64",
+    "container_user": "10001:10001"
+  },
+  "inventory": {
+    "expected_total_artifacts": 15,
+    "expected_maven_artifacts": 2,
+    "expected_docker_artifacts": 13,
+    "expected_environment_count": 3,
+    "expected_total_artifact_checks": 45
+  },
+  "environments": {
+    "DEV": {
+      "github_environment": "dev",
+      "maven_repository": "libs-release-local",
+      "docker_repository": "docker-trial",
+      "expected_user": "maven-deployer"
+    },
+    "QA": {
+      "github_environment": "qa",
+      "maven_repository": "maven-qa-local",
+      "docker_repository": "docker-qa-local",
+      "expected_user": "qa-promoter"
+    },
+    "PROD": {
+      "github_environment": "production",
+      "maven_repository": "maven-prod-local",
+      "docker_repository": "docker-prod-local",
+      "expected_user": "prod-promoter"
+    }
+  },
+  "runtime": {
+    "expected_exit_code": 0,
+    "network": "none",
+    "read_only": true,
+    "cap_drop": "ALL",
+    "no_new_privileges": true,
+    "memory": "256m",
+    "cpus": "0.5",
+    "pids_limit": 100,
+    "expected_output": [
+      "Hello and welcome!",
+      "i = 1",
+      "i = 2",
+      "i = 3",
+      "i = 4",
+      "i = 5"
+    ]
+  }
+}

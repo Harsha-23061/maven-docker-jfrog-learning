@@ -6,3 +6,5 @@
 **/.env.*
 !**/.env.example
 *.log
+/19-automated-enterprise-release/evidence/*
+!/19-automated-enterprise-release/evidence/.gitkeep
