@@ -224,3 +224,7 @@ The workflow checked QA environment=qa and release.status=validated, pinned know
 
 ## Step 16 and phase closure
 User confirmed final PROD artifact and metadata inspection in Artifactory. Phase 14 lab promotion objectives completed. Exact final UI state is user-confirmed; earlier workflow read-back was directly verified. Xray enforcement remains unresolved, and write/delete negative tests, branch rejection and bypass tests remain outstanding. No real production authorization.
+
+## Final documentation audit
+
+Generic promotion lab completed, including protected QA-to-PROD copy and checksum verification. Write/delete denial and independent approval remain unverified. Later Maven/Docker promotion is covered in [Phase 15](../15-enterprise-cicd).
