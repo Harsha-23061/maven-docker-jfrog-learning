@@ -1,0 +1,681 @@
+
+name: Phase 19 - Enterprise Integrity Verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: enterprise-integrity-verification
+  cancel-in-progress: false
+
+env:
+  PHASE_ROOT: 19-automated-enterprise-release
+  BASELINE: 19-automated-enterprise-release/config/release-baseline.json
+  VERIFY_SCRIPT: 19-automated-enterprise-release/scripts/verify-integrity.sh
+  JFROG_URL: https://trialgccoro.jfrog.io
+
+jobs:
+
+  # ==================================================
+  # JOB 1 - VERIFY RELEASE PROVENANCE
+  # ==================================================
+
+  verify-provenance:
+    name: Verify Release Provenance
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate configuration and Bash syntax
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          test -f "$BASELINE"
+          test -f "$VERIFY_SCRIPT"
+
+          bash -n "$VERIFY_SCRIPT"
+
+          jq -e '
+            .schema_version == "1.0" and
+            .release.bundle_version == "1.0.8" and
+            .inventory.expected_total_artifacts == 15 and
+            .inventory.expected_total_artifact_checks == 45
+          ' "$BASELINE" >/dev/null
+
+          echo "PASS: Baseline configuration"
+          echo "PASS: Bash syntax validation"
+
+      - name: Verify original CI workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          RUN_ID=$(jq -er '.source_build.ci_run_id' "$BASELINE")
+          ATTEMPT=$(jq -er '.source_build.ci_run_attempt' "$BASELINE")
+          COMMIT=$(jq -er '.source_build.git_commit' "$BASELINE")
+
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" \
+            > ci-run.json
+
+          jq -e \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --arg commit "$COMMIT" \
+            --argjson attempt "$ATTEMPT" \
+            '
+            .status == "completed" and
+            .conclusion == "success" and
+            .head_branch == "main" and
+            .head_sha == $commit and
+            .head_repository.full_name == $repo and
+            .run_attempt == $attempt and
+            .path == ".github/workflows/enterprise-ci-oidc.yml"
+            ' ci-run.json >/dev/null
+
+          echo "PASS: Original CI workflow verified"
+          echo "Source CI run: $RUN_ID"
+
+      - name: Verify production promotion workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+
+          RUN_ID=$(jq -er \
+            '.github.production_promotion_run_id' "$BASELINE")
+
+          ATTEMPT=$(jq -er \
+            '.github.production_promotion_run_attempt' "$BASELINE")
+
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" \
+            > production-run.json
+
+          jq -e \
+            --arg repo "$GITHUB_REPOSITORY" \
+            --argjson attempt "$ATTEMPT" \
+            '
+            .status == "completed" and
+            .conclusion == "success" and
+            .head_branch == "main" and
+            .head_repository.full_name == $repo and
+            .run_attempt == $attempt and
+            .path == ".github/workflows/enterprise-release-prod-promotion.yml"
+            ' production-run.json >/dev/null
+
+          echo "PASS: Production promotion workflow verified"
+
+      - name: Download production promotion evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: production-release-evidence-45826565840-1
+          path: previous-production-evidence
+          run-id: 45826565840
+          github-token: ${{ github.token }}
+
+      - name: Validate previous production evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          FILE="previous-production-evidence/prod-validation.json"
+
+          test -f "$FILE"
+
+          jq -e \
+            --slurpfile baseline "$BASELINE" \
+            '
+            $baseline[0] as $b |
+            .release_bundle == $b.release.bundle_name and
+            .release_version == $b.release.bundle_version and
+            .build_number == $b.source_build.number and
+            .artifact_version == $b.release.artifact_version and
+            .environment == "PROD" and
+            .qa_validation == "PASSED" and
+            .security_gate == "PASSED" and
+            .promotion == "PASSED" and
+            .integrity_validation == "PASSED" and
+            .jar_sha256 == $b.maven.jar_sha256 and
+            .pom_sha256 == $b.maven.pom_sha256 and
+            .docker_digest == $b.docker.digest
+            ' "$FILE" >/dev/null
+
+          echo "PASS: Previous production evidence verified"
+
+  # ==================================================
+  # JOB 2 - RETRIEVE ORIGINAL BUILD INVENTORY
+  # ==================================================
+
+  retrieve-build-inventory:
+    name: Retrieve Original Build Inventory
+    needs: verify-provenance
+    runs-on: ubuntu-latest
+    environment: dev
+    timeout-minutes: 15
+
+    env:
+      JFROG_SERVER_ID: jfrog-integrity-dev
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: 2.77.0
+          disable-auto-build-publish: true
+
+      - name: Authenticate and retrieve Build Info
+        shell: bash
+        env:
+          JFROG_USER: ${{ secrets.JFROG_DEV_USER }}
+          JFROG_TOKEN: ${{ secrets.JFROG_DEV_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "maven-deployer"
+
+          jf config add "$JFROG_SERVER_ID" \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id="$JFROG_SERVER_ID"
+
+          BUILD_NAME=$(jq -er '.source_build.name' "$BASELINE")
+          BUILD_NUMBER=$(jq -er '.source_build.number' "$BASELINE")
+
+          jf rt curl -f -XGET \
+            "/api/build/$BUILD_NAME/$BUILD_NUMBER" \
+            --server-id="$JFROG_SERVER_ID" \
+            > build-info.json
+
+          jq -e \
+            --arg name "$BUILD_NAME" \
+            --arg number "$BUILD_NUMBER" \
+            '
+            .buildInfo.name == $name and
+            .buildInfo.number == $number and
+            (.buildInfo.modules | type == "array")
+            ' build-info.json >/dev/null
+
+          echo "PASS: Original Build Info retrieved"
+
+      - name: Normalize original artifact inventory
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p inventory
+
+          jq '
+            [
+              .buildInfo.modules[]
+              | . as $module
+              | .artifacts[]
+              | {
+                  module: $module.id,
+                  type: $module.type,
+                  name: .name,
+                  sha256: .sha256
+                }
+            ]
+          ' build-info.json \
+            > inventory/original-build-inventory.json
+
+          jq -e '
+            length == 15 and
+            ([.[] | select(.type == "generic")] | length) == 2 and
+            ([.[] | select(.type == "docker")] | length) == 13 and
+            all(.[];
+              (.sha256 | type == "string") and
+              (.sha256 | test("^[a-f0-9]{64}$"))
+            )
+          ' inventory/original-build-inventory.json >/dev/null
+
+          echo "PASS: Original artifact inventory"
+          echo "Maven artifacts: 2"
+          echo "Docker artifacts: 13"
+          echo "Total artifacts: 15"
+
+      - name: Upload normalized build inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-build-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: inventory/original-build-inventory.json
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Cleanup JFrog configuration
+        if: always()
+        shell: bash
+        run: |
+          jf config remove "$JFROG_SERVER_ID" \
+            --quiet || true
+
+  # ==================================================
+  # JOB 3 - VERIFY DEV, QA AND PROD
+  # ==================================================
+
+  verify-environments:
+    name: Verify ${{ matrix.target }} Integrity
+    needs: retrieve-build-inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: DEV
+            github_environment: dev
+            user_secret: JFROG_DEV_USER
+            token_secret: JFROG_DEV_TOKEN
+
+          - target: QA
+            github_environment: qa
+            user_secret: JFROG_QA_USER
+            token_secret: JFROG_QA_TOKEN
+
+          - target: PROD
+            github_environment: production
+            user_secret: JFROG_PROD_USER
+            token_secret: JFROG_PROD_TOKEN
+
+    environment: ${{ matrix.github_environment }}
+
+    env:
+      TARGET_ENV: ${{ matrix.target }}
+      JFROG_SERVER_ID: jfrog-integrity-${{ matrix.target }}
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: 2.77.0
+          disable-auto-build-publish: true
+
+      - name: Download original build inventory
+        uses: actions/download-artifact@v4
+        with:
+          name: original-build-inventory-${{ github.run_id }}-${{ github.run_attempt }}
+          path: inventory
+
+      - name: Configure environment authentication
+        shell: bash
+        env:
+          JFROG_USER: ${{ secrets[matrix.user_secret] }}
+          JFROG_TOKEN: ${{ secrets[matrix.token_secret] }}
+        run: |
+          set -Eeuo pipefail
+
+          EXPECTED_USER=$(jq -er \
+            --arg env "$TARGET_ENV" \
+            '.environments[$env].expected_user' "$BASELINE")
+
+          test -n "$JFROG_TOKEN"
+          test "$JFROG_USER" = "$EXPECTED_USER"
+
+          jf config add "$JFROG_SERVER_ID" \
+            --url="$JFROG_URL" \
+            --user="$JFROG_USER" \
+            --access-token="$JFROG_TOKEN" \
+            --interactive=false
+
+          jf rt ping --server-id="$JFROG_SERVER_ID"
+
+          echo "PASS: $TARGET_ENV authentication"
+
+      - name: Execute reusable integrity verification
+        shell: bash
+        env:
+          JFROG_USER: ${{ secrets[matrix.user_secret] }}
+          JFROG_TOKEN: ${{ secrets[matrix.token_secret] }}
+        run: |
+          set -Eeuo pipefail
+
+          bash "$VERIFY_SCRIPT" \
+            "$TARGET_ENV" \
+            "$BASELINE" \
+            inventory/original-build-inventory.json \
+            "evidence/$TARGET_ENV"
+
+      - name: Execute restricted production runtime test
+        if: matrix.target == 'PROD'
+        shell: bash
+        env:
+          JFROG_USER: ${{ secrets[matrix.user_secret] }}
+          JFROG_TOKEN: ${{ secrets[matrix.token_secret] }}
+        run: |
+          set -Eeuo pipefail
+
+          REGISTRY=$(jq -er '.jfrog.registry' "$BASELINE")
+          REPO=$(jq -er '.environments.PROD.docker_repository' "$BASELINE")
+          IMAGE_NAME=$(jq -er '.docker.image_name' "$BASELINE")
+          DIGEST=$(jq -er '.docker.digest' "$BASELINE")
+          PLATFORM=$(jq -er '.docker.platform' "$BASELINE")
+          EXPECTED_USER=$(jq -er '.docker.container_user' "$BASELINE")
+
+          IMAGE="$REGISTRY/$REPO/$IMAGE_NAME@$DIGEST"
+
+          export DOCKER_CONFIG
+          DOCKER_CONFIG=$(mktemp -d)
+
+          cleanup() {
+            docker logout "$REGISTRY" >/dev/null 2>&1 || true
+            rm -rf -- "$DOCKER_CONFIG"
+          }
+
+          trap cleanup EXIT
+
+          printf '%s' "$JFROG_TOKEN" |
+            docker login "$REGISTRY" \
+              --username "$JFROG_USER" \
+              --password-stdin
+
+          docker pull --platform "$PLATFORM" "$IMAGE"
+
+          docker image inspect "$IMAGE" > image-inspect.json
+
+          jq -e \
+            --arg user "$EXPECTED_USER" \
+            --arg image "$IMAGE" \
+            '
+            .[0].Config.User == $user and
+            .[0].Os == "linux" and
+            .[0].Architecture == "amd64" and
+            (.[0].RepoDigests | index($image) != null)
+            ' image-inspect.json >/dev/null
+
+          echo "PASS: Production image identity"
+          echo "PASS: Non-root container user"
+
+          docker run --rm \
+            --platform "$PLATFORM" \
+            --network none \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges=true \
+            --memory 256m \
+            --cpus 0.5 \
+            --pids-limit 100 \
+            "$IMAGE" \
+            > evidence/PROD/runtime-output.txt 2>&1
+
+          jq -r '.runtime.expected_output[]' "$BASELINE" \
+            > expected-runtime-output.txt
+
+          diff -u \
+            expected-runtime-output.txt \
+            evidence/PROD/runtime-output.txt
+
+          jq -n \
+            --arg image "$IMAGE" \
+            --arg digest "$DIGEST" \
+            --arg user "$EXPECTED_USER" \
+            '{
+              environment: "PROD",
+              image: $image,
+              docker_digest: $digest,
+              container_user: $user,
+              network_disabled: true,
+              read_only_filesystem: true,
+              capabilities_dropped: "ALL",
+              no_new_privileges: true,
+              exit_code: 0,
+              runtime_validation: "PASSED"
+            }' > evidence/PROD/runtime-validation.json
+
+          echo "PASS: Production runtime validation"
+
+      - name: Prepare sanitized audit evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          SOURCE="evidence/$TARGET_ENV"
+          DESTINATION="sanitized/$TARGET_ENV"
+
+          mkdir -p "$DESTINATION"
+
+          cp "$SOURCE/environment-summary.json" "$DESTINATION/"
+          cp "$SOURCE/maven-integrity.json" "$DESTINATION/"
+          cp "$SOURCE/docker-digest.json" "$DESTINATION/"
+
+          jq 'map(del(.matched_paths))' \
+            "$SOURCE/docker-artifact-comparison.json" \
+            > "$DESTINATION/docker-artifact-comparison.json"
+
+          if [[ "$TARGET_ENV" == "PROD" ]]; then
+            cp "$SOURCE/runtime-validation.json" "$DESTINATION/"
+          fi
+
+          echo "PASS: Audit evidence prepared"
+
+      - name: Upload environment integrity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: integrity-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sanitized/${{ matrix.target }}/
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Cleanup JFrog configuration
+        if: always()
+        shell: bash
+        run: |
+          jf config remove "$JFROG_SERVER_ID" \
+            --quiet || true
+
+  # ==================================================
+  # JOB 4 - CONSOLIDATED ENTERPRISE AUDIT
+  # ==================================================
+
+  consolidated-audit:
+    name: Consolidated Enterprise Integrity Audit
+    needs: verify-environments
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Download environment evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: integrity-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: collected-evidence
+          merge-multiple: false
+
+      - name: Validate consolidated integrity evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p audit
+
+          for ENV in DEV QA PROD; do
+
+            DIR="collected-evidence/integrity-$ENV-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+
+            test -f "$DIR/environment-summary.json"
+
+            jq -e \
+              --arg env "$ENV" \
+              --slurpfile baseline "$BASELINE" \
+              '
+              $baseline[0] as $b |
+              .environment == $env and
+              .release_bundle == $b.release.bundle_name and
+              .release_version == $b.release.bundle_version and
+              .build_number == $b.source_build.number and
+              .artifact_version == $b.release.artifact_version and
+              .maven_artifacts_verified == 2 and
+              .docker_artifacts_verified == 13 and
+              .total_artifacts_verified == 15 and
+              .failed_artifacts == 0 and
+              .jar_sha256 == $b.maven.jar_sha256 and
+              .pom_sha256 == $b.maven.pom_sha256 and
+              .docker_digest == $b.docker.digest and
+              .overall_status == "PASSED"
+              ' "$DIR/environment-summary.json" >/dev/null
+
+            echo "PASS: $ENV audit evidence"
+
+          done
+
+          PROD_DIR="collected-evidence/integrity-PROD-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+
+          jq -e \
+            --slurpfile baseline "$BASELINE" \
+            '
+            .environment == "PROD" and
+            .runtime_validation == "PASSED" and
+            .exit_code == 0 and
+            .docker_digest == $baseline[0].docker.digest and
+            .container_user == $baseline[0].docker.container_user
+            ' "$PROD_DIR/runtime-validation.json" >/dev/null
+
+          echo "PASS: Production runtime evidence"
+
+          find collected-evidence \
+            -name environment-summary.json \
+            -type f \
+            -exec cat {} \; |
+            jq -s '.' > audit/environment-results.json
+
+          jq -e '
+            length == 3 and
+            ([.[].environment] | sort) == ["DEV","PROD","QA"] and
+            ([.[].total_artifacts_verified] | add) == 45 and
+            ([.[].failed_artifacts] | add) == 0
+          ' audit/environment-results.json >/dev/null
+
+          echo "PASS: All 45 artifact checks verified"
+
+      - name: Generate master audit report
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          RELEASE=$(jq -er '.release.bundle_version' "$BASELINE")
+          BUILD=$(jq -er '.source_build.number' "$BASELINE")
+          BUNDLE=$(jq -er '.release.bundle_name' "$BASELINE")
+          DIGEST=$(jq -er '.docker.digest' "$BASELINE")
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          jq -n \
+            --arg release "$RELEASE" \
+            --arg bundle "$BUNDLE" \
+            --arg build "$BUILD" \
+            --arg digest "$DIGEST" \
+            --arg run "$GITHUB_RUN_ID" \
+            --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg commit "$GITHUB_SHA" \
+            --arg timestamp "$TIMESTAMP" \
+            --slurpfile results audit/environment-results.json \
+            '{
+              report_type: "Enterprise Release Integrity Audit",
+              release_bundle: $bundle,
+              release_version: $release,
+              build_number: $build,
+              docker_digest: $digest,
+              github_run_id: $run,
+              github_run_attempt: $attempt,
+              verification_commit: $commit,
+              environments_verified: 3,
+              original_artifact_count: 15,
+              maven_artifacts_verified: 6,
+              docker_artifacts_verified: 39,
+              total_artifact_checks: 45,
+              additional_digest_checks: 3,
+              failed_checks: 0,
+              production_runtime_validation: "PASSED",
+              overall_integrity_status: "PASSED",
+              verification_scope: "Maven file hashes, Docker repository checksum metadata, image index digests and restricted local runtime",
+              environment_results: $results[0],
+              generated_at_utc: $timestamp
+            }' > audit/enterprise-integrity-audit.json
+
+          cp -r collected-evidence audit/environment-evidence
+
+          sha256sum "$BASELINE" \
+            > audit/baseline-fingerprint.txt
+
+          cat audit/enterprise-integrity-audit.json
+
+      - name: Generate audit checksum manifest
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          cd audit
+
+          find . -type f \
+            ! -name SHA256SUMS \
+            -print0 |
+            sort -z |
+            xargs -0 sha256sum > SHA256SUMS
+
+          sha256sum -c SHA256SUMS
+
+          echo "PASS: Audit evidence checksum verification"
+
+      - name: Generate GitHub workflow summary
+        shell: bash
+        run: |
+          {
+            echo "# Enterprise Integrity Verification"
+            echo ""
+            echo "| Verification | Result |"
+            echo "|---|---|"
+            echo "| Release version | 1.0.8 |"
+            echo "| Original build | 45636994469-1 |"
+            echo "| DEV artifact checks | 15/15 |"
+            echo "| QA artifact checks | 15/15 |"
+            echo "| PROD artifact checks | 15/15 |"
+            echo "| Total artifact checks | 45/45 |"
+            echo "| Additional Docker digest checks | 3/3 |"
+            echo "| Failed checks | 0 |"
+            echo "| Production runtime | PASSED |"
+            echo "| Overall integrity | PASSED |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload consolidated enterprise audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: enterprise-integrity-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: audit/
+          retention-days: 30
+          if-no-files-found: error
