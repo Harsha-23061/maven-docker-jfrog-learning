@@ -1,0 +1,142 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: enterprise-deployment-security
+spec:
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["jobs"]
+
+  matchConditions:
+    - name: enterprise-deployment-identity
+      expression: >
+        request.userInfo.username ==
+        'system:serviceaccount:enterprise-prod:enterprise-deployer'
+
+    - name: enterprise-production-namespace
+      expression: >
+        request.namespace == 'enterprise-prod'
+
+  variables:
+    - name: pod
+      expression: object.spec.template.spec
+
+  validations:
+    - expression: >
+        variables.pod.serviceAccountName == 'enterprise-runtime'
+      message: "Only enterprise-runtime ServiceAccount is allowed"
+
+    - expression: >
+        has(variables.pod.automountServiceAccountToken) &&
+        variables.pod.automountServiceAccountToken == false
+      message: "ServiceAccount token mounting must be disabled"
+
+    - expression: >
+        size(variables.pod.containers) == 1
+      message: "Exactly one application container is required"
+
+    - expression: >
+        !has(variables.pod.initContainers) ||
+        size(variables.pod.initContainers) == 0
+      message: "Init containers are not allowed"
+
+    - expression: >
+        !has(variables.pod.ephemeralContainers) ||
+        size(variables.pod.ephemeralContainers) == 0
+      message: "Ephemeral containers are not allowed"
+
+    - expression: >
+        variables.pod.containers.all(c,
+          c.image == 'trialgccoro.jfrog.io/docker-prod-local/enterprise-demo@sha256:802449680bbc5d323689ee1dcb8081367f662af7d948d451ee8d9b6ac2d2f3b3')
+      message: "Only the approved production image digest is allowed"
+
+    - expression: >
+        !has(variables.pod.volumes) ||
+        size(variables.pod.volumes) == 0
+      message: "Additional volumes are not allowed"
+
+    - expression: >
+        variables.pod.containers.all(c,
+          (!has(c.env) || size(c.env) == 0) &&
+          (!has(c.envFrom) || size(c.envFrom) == 0))
+      message: "Environment variable injection is not allowed"
+
+    - expression: >
+        variables.pod.containers.all(c,
+          (!has(c.command) || size(c.command) == 0) &&
+          (!has(c.args) || size(c.args) == 0) &&
+          !has(c.lifecycle) &&
+          !has(c.livenessProbe) &&
+          !has(c.readinessProbe) &&
+          !has(c.startupProbe))
+      message: "Container execution overrides are not allowed"
+
+    - expression: >
+        (!has(variables.pod.hostNetwork) ||
+          !variables.pod.hostNetwork) &&
+        (!has(variables.pod.hostPID) ||
+          !variables.pod.hostPID) &&
+        (!has(variables.pod.hostIPC) ||
+          !variables.pod.hostIPC)
+      message: "Host namespaces are not allowed"
+
+    - expression: >
+        has(variables.pod.securityContext) &&
+        has(variables.pod.securityContext.runAsNonRoot) &&
+        variables.pod.securityContext.runAsNonRoot == true &&
+        has(variables.pod.securityContext.runAsUser) &&
+        variables.pod.securityContext.runAsUser == 10001 &&
+        has(variables.pod.securityContext.runAsGroup) &&
+        variables.pod.securityContext.runAsGroup == 10001
+      message: "Pod must run as user and group 10001"
+
+    - expression: >
+        has(variables.pod.securityContext) &&
+        has(variables.pod.securityContext.seccompProfile) &&
+        variables.pod.securityContext.seccompProfile.type == 'RuntimeDefault'
+      message: "RuntimeDefault seccomp profile is required"
+
+    - expression: >
+        variables.pod.containers.all(c,
+          has(c.securityContext) &&
+          (!has(c.securityContext.privileged) ||
+            !c.securityContext.privileged) &&
+          has(c.securityContext.allowPrivilegeEscalation) &&
+          !c.securityContext.allowPrivilegeEscalation &&
+          has(c.securityContext.readOnlyRootFilesystem) &&
+          c.securityContext.readOnlyRootFilesystem)
+      message: "Container security restrictions are mandatory"
+
+    - expression: >
+        variables.pod.containers.all(c,
+          has(c.securityContext) &&
+          (!has(c.securityContext.runAsUser) ||
+            c.securityContext.runAsUser == 10001) &&
+          (!has(c.securityContext.runAsGroup) ||
+            c.securityContext.runAsGroup == 10001) &&
+          (!has(c.securityContext.runAsNonRoot) ||
+            c.securityContext.runAsNonRoot) &&
+          (!has(c.securityContext.seccompProfile) ||
+            c.securityContext.seccompProfile.type == 'RuntimeDefault'))
+      message: "Container cannot override pod security restrictions"
+
+    - expression: >
+        variables.pod.containers.all(c,
+          has(c.securityContext) &&
+          has(c.securityContext.capabilities) &&
+          has(c.securityContext.capabilities.drop) &&
+          'ALL' in c.securityContext.capabilities.drop &&
+          (!has(c.securityContext.capabilities.add) ||
+            size(c.securityContext.capabilities.add) == 0))
+      message: "All Linux capabilities must be dropped"
+
+    - expression: >
+        has(variables.pod.imagePullSecrets) &&
+        size(variables.pod.imagePullSecrets) == 1 &&
+        variables.pod.imagePullSecrets[0].name == 'jfrog-registry-secret'
+      message: "Only the approved JFrog registry secret is allowed"
